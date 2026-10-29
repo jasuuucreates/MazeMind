@@ -382,6 +382,15 @@
     });
   }
 
+  // spoken by screen readers: only real events, never the ticking clock
+  function announce(g, ev) {
+    let text = '';
+    if (ev.type === 'gem') text = g.gems.size ? `Gem collected. ${g.gems.size} left.` : 'Last gem collected. The exit is open.';
+    else if (ev.type === 'caught') text = g.lives > 0 ? `Caught. ${g.lives} ${g.lives === 1 ? 'life' : 'lives'} left.` : 'Caught. Out of lives. Press R to try again.';
+    else if (ev.type === 'won') text = `You escaped. Score ${g.score}.`;
+    if (text) $('play-announce').textContent = text;
+  }
+
   function loop(t) {
     const dt = Math.min(100, t - (state.last || t));
     state.last = t;
@@ -404,6 +413,7 @@
       while (state.heard < g.events.length) {
         const ev = g.events[state.heard++];
         if (MM.sound[ev.type]) MM.sound[ev.type]();
+        announce(g, ev);
       }
     }
     // a win can also happen on a key press between frames, so check it outside the running branch
