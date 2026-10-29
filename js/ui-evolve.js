@@ -155,12 +155,28 @@
     MM.play.loadLevel(level, `Evolved (gen ${state.ga.history.length - 1})`);
   }
 
+  // download the fittest maze (with its A* route) as a picture
+  function saveImage() {
+    const gen = state.ga.history.length - 1;
+    $('evo-maze').toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `mazemind-evolved-gen-${gen}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, 'image/png');
+  }
+
   const evolve = {
     started: false,
     init() {
       $('evo-run').addEventListener('click', toggle);
       $('evo-reset').addEventListener('click', reset);
       $('evo-play').addEventListener('click', playBest);
+      $('evo-save').addEventListener('click', saveImage);
       $('evo-size').addEventListener('change', reset);
       $('evo-pop').addEventListener('change', reset);
       for (const id of ['evo-w-path', 'evo-w-dead', 'evo-w-loops', 'evo-mut']) {

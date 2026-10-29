@@ -132,16 +132,17 @@
         <div>
           <div class="toolbar">
             <select id="evo-size" aria-label="Maze size">
-              <option value="small">Small, 10 x 7 rooms</option>
-              <option value="medium" selected>Medium, 14 x 9 rooms</option>
-              <option value="large">Large, 17 x 11 rooms</option>
+              <option value="small">Small 10 &times; 7</option>
+              <option value="medium" selected>Medium 14 &times; 9</option>
+              <option value="large">Large 17 &times; 11</option>
             </select>
             <label class="inline">Population <input id="evo-pop" type="number" min="10" max="200" value="60" style="width: 76px"></label>
             <label class="inline">Generations <input id="evo-gens" type="number" min="10" max="1000" value="150" style="width: 84px"></label>
             <span class="spacer"></span>
-            <button id="evo-reset">New population</button>
+            <button id="evo-reset" title="Start again from a new random population">Restart</button>
             <button id="evo-run" class="primary">Evolve</button>
-            <button id="evo-play">Play this maze</button>
+            <button id="evo-play" title="Play the fittest maze">Play it</button>
+            <button id="evo-save" title="Download the fittest maze as a PNG">Save PNG</button>
           </div>
           <div class="stage" id="evo-maze-stage"><canvas id="evo-maze" aria-label="Fittest maze"></canvas></div>
           <div class="legend">
