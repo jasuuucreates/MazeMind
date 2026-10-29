@@ -124,7 +124,42 @@
   }
 
   function currentSearch(algo) {
-    return MM.search.run(algo || $('lab-algo').value, state.grid, state.start, state.goal, { heuristic: $('lab-heuristic').value });
+    const heuristic = $('lab-heuristic').value;
+    const res = MM.search.run(algo || $('lab-algo').value, state.grid, state.start, state.goal, { heuristic });
+    res.heuristic = heuristic; // remembered for the hover read-out
+    return res;
+  }
+
+  // point at a cell after a search to see when it was expanded and, for A*, its g, h and f
+  function hoverInfo(ev) {
+    const out = $('lab-hover');
+    const res = state.stepper ? state.stepper.res : state.shownResult;
+    const i = cellAt(ev);
+    if (state.drag || state.anim || !res || i < 0) {
+      out.textContent = '';
+      return;
+    }
+    if (!res.order) res.order = new Map(res.trace.map((e, k) => [e.node, k]));
+    const { x, y } = state.grid.xy(i);
+    const k = res.order.get(i);
+    const limit = state.stepper ? state.stepper.at : res.trace.length;
+    if (state.grid.cells[i] === 1) out.textContent = `(${x}, ${y}) is a wall.`;
+    else if (k === undefined || k >= limit) out.textContent = `(${x}, ${y}) has not been expanded.`;
+    else {
+      const e = res.trace[k];
+      const goal = state.grid.xy(state.goal);
+      const h = +MM.search.HEURISTICS[res.heuristic](x, y, goal.x, goal.y).toFixed(2);
+      let numbers = '';
+      if (res.algorithm === 'astar') numbers = `: g = ${e.g}, h = ${h}, f = ${+e.f.toFixed(2)}`;
+      else if (res.algorithm === 'greedy') numbers = `: h = ${h}`;
+      const onPath = limit === res.trace.length && res.path.includes(i) ? ', on the final path' : '';
+      out.textContent = `(${x}, ${y}) was expanded ${ordinal(k + 1)}${numbers}${onPath}.`;
+    }
+  }
+
+  function ordinal(n) {
+    const suffix = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+    return n + suffix;
   }
 
   function run() {
@@ -236,7 +271,9 @@
     });
     c.addEventListener('pointermove', (ev) => {
       if (state.drag) applyDrag(cellAt(ev));
+      else hoverInfo(ev);
     });
+    c.addEventListener('pointerleave', () => ($('lab-hover').textContent = ''));
     const end = () => (state.drag = null);
     c.addEventListener('pointerup', end);
     c.addEventListener('pointercancel', end);
