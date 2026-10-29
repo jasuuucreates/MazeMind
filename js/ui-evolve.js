@@ -7,13 +7,22 @@
   const SIZES = { small: [10, 7], medium: [14, 9], large: [17, 11] };
   const state = { ga: null, running: false, raf: 0, cell: 12 };
 
+  // typed numbers are clamped: an empty or silly value must not crash or run forever
+  function readNumber(id, fallback, min, max) {
+    const input = $(id);
+    const v = Math.round(Number(input.value));
+    const ok = Number.isFinite(v) && input.value.trim() !== '' ? Math.min(max, Math.max(min, v)) : fallback;
+    if (String(ok) !== input.value) input.value = ok;
+    return ok;
+  }
+
   function settings() {
     const [cols, rows] = SIZES[$('evo-size').value];
     return {
       cols,
       rows,
-      populationSize: Number($('evo-pop').value),
-      generations: Number($('evo-gens').value),
+      populationSize: readNumber('evo-pop', 60, 10, 200),
+      generations: readNumber('evo-gens', 150, 10, 1000),
       mutationRate: Number($('evo-mut').value) / 100,
       weights: { path: Number($('evo-w-path').value), deadEnds: Number($('evo-w-dead').value), loops: Number($('evo-w-loops').value) },
     };
@@ -59,11 +68,11 @@
     state.cell = MM.render.fitCanvas(canvas, best.grid, Math.max(260, stage.clientWidth - 28), 420);
     const ctx = canvas.getContext('2d');
     MM.render.drawGrid(ctx, best.grid, state.cell);
-    if (best.stats.route) MM.render.drawPath(ctx, best.grid, state.cell, best.stats.route, 'rgba(45, 212, 191, 0.85)');
+    if (best.stats.route) MM.render.drawPath(ctx, best.grid, state.cell, best.stats.route, '#ffffff', Math.max(2, state.cell * 0.22));
     const start = best.grid.index(1, 1);
     const exit = best.grid.index(best.grid.width - 2, best.grid.height - 2);
-    MM.render.drawDot(ctx, best.grid, state.cell, start, MM.render.COLORS.start, 0.42, 8);
-    MM.render.drawDot(ctx, best.grid, state.cell, exit, MM.render.COLORS.goal, 0.42, 8);
+    MM.render.drawMarker(ctx, best.grid, state.cell, start, 'S', true);
+    MM.render.drawMarker(ctx, best.grid, state.cell, exit, 'E', false);
   }
 
   function drawChart() {
@@ -86,9 +95,9 @@
     const hi = Math.ceil(Math.max(...values) * 10) / 10 || 1;
     const X = (g) => pad.l + (g / Math.max(1, maxGen - 1)) * (w - pad.l - pad.r);
     const Y = (v) => h - pad.b - ((v - lo) / Math.max(0.0001, hi - lo)) * (h - pad.t - pad.b);
-    ctx.strokeStyle = '#2a3256';
-    ctx.fillStyle = '#9aa3c7';
-    ctx.font = '11px system-ui, sans-serif';
+    ctx.strokeStyle = '#262626';
+    ctx.fillStyle = '#6b6b6b';
+    ctx.font = `12px ${MM.render.FONT}`;
     ctx.lineWidth = 1;
     for (let k = 0; k <= 4; k++) {
       const v = lo + ((hi - lo) * k) / 4;
@@ -106,8 +115,8 @@
       hist.forEach((r, i) => (i ? ctx.lineTo(X(i), Y(r[key])) : ctx.moveTo(X(i), Y(r[key]))));
       ctx.stroke();
     };
-    line('average', '#c084fc');
-    line('best', '#2dd4bf');
+    line('average', '#6b6b6b');
+    line('best', '#ffffff');
   }
 
   function drawStats() {
@@ -123,7 +132,7 @@
       [s.loops, 'escape loops'],
       [`${s.reachable}/${s.rooms}`, 'rooms reachable'],
     ];
-    $('evo-stats').innerHTML = items.map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+    $('evo-stats').innerHTML = items.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
     $('evo-play').disabled = !s.solvable;
   }
 

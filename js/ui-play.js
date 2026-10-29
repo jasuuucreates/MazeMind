@@ -15,7 +15,6 @@
   };
   const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
   const BUFFER_MS = 300; // a turn pressed slightly before a junction is remembered this long
-  const MODE_COLORS = { CHASE: '#f87171', AMBUSH: '#fbbf24', PATROL: '#38bdf8', REST: '#94a3b8' };
   const REPEAT_MS = 125;
 
   const state = {
@@ -101,65 +100,67 @@
     state.background = bg;
   }
 
-  function drawDiamond(ctx, cx, cy, r, color) {
+  const C = MM.render.COLORS;
+  const font = (weight, size) => `${weight} ${size}px ${MM.render.FONT}`;
+
+  // gem: outlined diamond that gently rises and falls
+  function drawGem(ctx, cx, cy, r) {
     ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = color;
+    ctx.strokeStyle = '#ffffff';
+    ctx.fillStyle = '#5c5c5c';
+    ctx.lineWidth = Math.max(1.5, r * 0.22);
     ctx.beginPath();
     ctx.moveTo(cx, cy - r);
-    ctx.lineTo(cx + r * 0.8, cy);
+    ctx.lineTo(cx + r * 0.75, cy);
     ctx.lineTo(cx, cy + r);
-    ctx.lineTo(cx - r * 0.8, cy);
+    ctx.lineTo(cx - r * 0.75, cy);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
     ctx.restore();
   }
 
-  function drawHunter(ctx, g, cell, h, t, cx, cy) {
-    const r = cell * 0.4;
+  // hunter: a red sentinel with one eye that looks where it is about to step
+  function drawHunter(ctx, g, cell, h, k, cx, cy) {
+    const s = cell * 0.78;
     ctx.save();
-    ctx.shadowColor = h.color;
-    ctx.shadowBlur = h.mode === 'CHASE' ? 16 + 6 * Math.sin(t / 120) : 6;
-    ctx.fillStyle = h.color;
+    ctx.fillStyle = C.hunter;
+    ctx.globalAlpha = h.mode === 'REST' ? 0.55 : 1;
     ctx.beginPath();
-    ctx.arc(cx, cy - r * 0.15, r, Math.PI, 0);
-    ctx.lineTo(cx + r, cy + r * 0.85);
-    for (let k = 3; k >= 0; k--) ctx.lineTo(cx - r + (2 * r * k) / 3, cy + r * (k % 2 ? 0.55 : 0.85));
-    ctx.closePath();
+    ctx.roundRect(cx - s / 2, cy - s / 2, s, s, s * 0.22);
     ctx.fill();
-    ctx.restore();
-    // eyes look at the next cell on the hunter's route
+    ctx.globalAlpha = 1;
     const next = h.path.length > 1 ? h.path[1] : h.pos;
     const [ox, oy] = MM.render.center(g.grid, cell, h.pos);
     const [nx, ny] = MM.render.center(g.grid, cell, next);
-    const lx = Math.sign(nx - ox) * r * 0.15;
-    const ly = Math.sign(ny - oy) * r * 0.15;
-    for (const side of [-1, 1]) {
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(cx + side * r * 0.38, cy - r * 0.2, r * 0.26, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#0b0e1c';
-      ctx.beginPath();
-      ctx.arc(cx + side * r * 0.38 + lx, cy - r * 0.2 + ly, r * 0.13, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (h.mode === 'REST') {
-      ctx.fillStyle = '#e2e8f0';
-      ctx.font = `700 ${Math.max(8, Math.floor(cell * 0.45))}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('z', cx + r * 0.9, cy - r * 0.9);
-    }
+    const dx = Math.sign(nx - ox);
+    const dy = Math.sign(ny - oy);
+    const ex = cx + dx * s * 0.14;
+    const ey = cy + dy * s * 0.14;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(ex, ey, s * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0b0b0b';
+    ctx.beginPath();
+    ctx.arc(ex + dx * s * 0.07, ey + dy * s * 0.07, s * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    // number tag so each sprite matches its row in the brain panel
+    ctx.fillStyle = '#ffffff';
+    ctx.font = font(700, Math.max(9, Math.floor(cell * 0.42)));
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(h.mode === 'REST' ? 'z' : String(k + 1), cx + s * 0.5, cy - s * 0.5);
+    ctx.restore();
   }
 
   // dashed planned route, starting from where the sprite is drawn right now
-  function drawRoute(ctx, cell, from, path, color) {
+  function drawRoute(ctx, cell, from, path) {
     const g = state.game;
     ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(2, cell * 0.12);
-    ctx.setLineDash([cell * 0.3, cell * 0.25]);
+    ctx.strokeStyle = 'rgba(229, 72, 77, 0.75)';
+    ctx.lineWidth = Math.max(1.5, cell * 0.1);
+    ctx.setLineDash([cell * 0.28, cell * 0.24]);
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(from[0], from[1]);
@@ -182,50 +183,52 @@
     if ($('play-thinking').checked) {
       g.hunters.forEach((h, k) => {
         if (!h.search) return;
-        MM.render.fillCells(ctx, g.grid, cell, h.search.closed, h.color + '22', 0);
-        drawRoute(ctx, cell, sprites[k], h.path, h.color);
+        MM.render.fillCells(ctx, g.grid, cell, h.search.closed, 'rgba(229, 72, 77, 0.10)', 0);
+        drawRoute(ctx, cell, sprites[k], h.path);
         if (h.mode === 'AMBUSH') {
           const [tx, ty] = MM.render.center(g.grid, cell, h.target);
-          ctx.strokeStyle = h.color;
-          ctx.lineWidth = 2;
-          ctx.strokeRect(tx - cell * 0.4, ty - cell * 0.4, cell * 0.8, cell * 0.8);
+          ctx.strokeStyle = C.hunter;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.strokeRect(tx - cell * 0.42, ty - cell * 0.42, cell * 0.84, cell * 0.84);
+          ctx.setLineDash([]);
         }
       });
     }
 
-    // exit: locked (grey) until every gem is collected, then a pulsing green portal
+    // exit: dashed grey square while locked, solid white once every gem is collected
     const open = g.gems.size === 0;
     const [ex, ey] = MM.render.center(g.grid, cell, g.exit);
+    const es = cell * 0.78;
     ctx.save();
-    ctx.lineWidth = Math.max(2, cell * 0.12);
-    ctx.strokeStyle = open ? '#4ade80' : '#64748b';
-    ctx.shadowColor = open ? '#4ade80' : 'transparent';
-    ctx.shadowBlur = open ? 14 + 6 * Math.sin(t / 200) : 0;
-    ctx.beginPath();
-    ctx.arc(ex, ey, cell * 0.36, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.lineWidth = Math.max(1.5, cell * 0.1);
+    if (open) {
+      ctx.fillStyle = `rgba(255,255,255,${0.18 + 0.12 * Math.sin(t / 260)})`;
+      ctx.fillRect(ex - es / 2, ey - es / 2, es, es);
+      ctx.strokeStyle = '#ffffff';
+    } else {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = '#6b6b6b';
+    }
+    ctx.strokeRect(ex - es / 2, ey - es / 2, es, es);
     ctx.restore();
-    if (!open) MM.render.drawLabel(ctx, g.grid, cell, g.exit, String(g.gems.size), '#94a3b8');
+    if (!open) MM.render.drawLabel(ctx, g.grid, cell, g.exit, String(g.gems.size), '#8c8c8c');
 
     for (const gem of g.gems) {
       const [gx, gy] = MM.render.center(g.grid, cell, gem);
-      drawDiamond(ctx, gx, gy + Math.sin(t / 250 + gem) * cell * 0.05, cell * 0.32, '#22d3ee');
+      drawGem(ctx, gx, gy + Math.sin(t / 300 + gem) * cell * 0.06, cell * 0.3);
     }
 
     const [px, py] = glide('player', g.player.pos, REPEAT_MS, t);
-    ctx.save();
-    ctx.shadowColor = '#facc15';
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = '#facc15';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(px, py, cell * 0.36, 0, Math.PI * 2);
+    ctx.arc(px, py, cell * 0.34, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
-    g.hunters.forEach((h, k) => drawHunter(ctx, g, cell, h, t, sprites[k][0], sprites[k][1]));
+    g.hunters.forEach((h, k) => drawHunter(ctx, g, cell, h, k, sprites[k][0], sprites[k][1]));
 
     const lastCaught = [...g.events].reverse().find((e) => e.type === 'caught');
-    if (lastCaught && g.elapsed - lastCaught.at < 700) {
-      ctx.fillStyle = `rgba(248,113,113,${0.35 * (1 - (g.elapsed - lastCaught.at) / 700)})`;
+    if (lastCaught && g.elapsed - lastCaught.at < 500) {
+      ctx.fillStyle = `rgba(229, 72, 77, ${0.28 * (1 - (g.elapsed - lastCaught.at) / 500)})`;
       ctx.fillRect(0, 0, g.grid.width * cell, g.grid.height * cell);
     }
     if (g.status !== 'playing' || state.paused || g.grace > 0) banner(ctx, g, cell);
@@ -237,68 +240,100 @@
     let title;
     let sub;
     if (g.status === 'won') {
-      title = 'You escaped!';
-      sub = `Score ${g.score} - press N for the next level or R to replay this maze`;
+      title = 'You escaped';
+      sub = `Score ${g.score}. N for the next level, R to replay this maze.`;
     } else if (g.status === 'lost') {
-      title = 'Caught!';
-      sub = 'Out of lives - press R to try this maze again';
+      title = 'Caught';
+      sub = 'Out of lives. R to try this maze again.';
     } else if (state.paused) {
       title = 'Paused';
-      sub = 'Press P to continue';
+      sub = 'P to continue.';
     } else {
-      title = 'Caught!';
-      sub = `${g.lives} ${g.lives === 1 ? 'life' : 'lives'} left - back to the start`;
+      title = 'Caught';
+      sub = `${g.lives} ${g.lives === 1 ? 'life' : 'lives'} left. Back to the start.`;
     }
-    ctx.fillStyle = 'rgba(8, 10, 22, 0.72)';
-    ctx.fillRect(0, h / 2 - 60, w, 120);
+    ctx.save();
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.86)';
+    ctx.fillRect(0, h / 2 - 54, w, 108);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, h / 2 - 54, w, 1);
+    ctx.fillRect(0, h / 2 + 53, w, 1);
     ctx.textAlign = 'center';
-    ctx.fillStyle = g.status === 'won' ? '#4ade80' : g.status === 'lost' ? '#f87171' : '#e6e9f5';
-    ctx.font = '800 34px system-ui, sans-serif';
-    ctx.fillText(title, w / 2, h / 2 - 6);
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '500 15px system-ui, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = g.status === 'won' || state.paused ? '#ffffff' : C.hunter;
+    ctx.font = font(700, 34);
+    ctx.fillText(title, w / 2, h / 2 - 2);
+    ctx.fillStyle = '#a1a1a1';
+    ctx.font = font(400, 16);
     ctx.fillText(sub, w / 2, h / 2 + 28);
+    ctx.restore();
+  }
+
+  // the score bar and the brain panel are built once per game and then only their numbers change,
+  // so nothing flickers and the bars can slide
+  function buildPanels() {
+    $('play-hud').innerHTML = ['Level', 'Lives', 'Gems', 'Time', 'Score'].map((k) => `<div><b data-hud="${k}"></b><span>${k}</span></div>`).join('');
+    const meter = (key, label, dim) => `<div class="meter"><span>${label}</span><div class="track${dim ? ' dim' : ''}"><i data-k="${key}"></i></div><em data-v="${key}"></em></div>`;
+    $('play-brain').innerHTML = state.game.hunters
+      .map((h, k) => `<div class="hunter" data-h="${k}">
+          <div class="hrow"><span class="tag">${k + 1}</span><b>Hunter ${k + 1}</b><span class="mode" data-mode></span></div>
+          ${meter('energy', 'energy')}
+          ${meter('aggr', 'aggression')}
+          <div class="fz">
+            <div><small data-dist></small>${meter('NEAR', 'near', 1)}${meter('MEDIUM', 'medium', 1)}${meter('FAR', 'far', 1)}</div>
+            <div><small data-en></small>${meter('LOW', 'low', 1)}${meter('E_MEDIUM', 'medium', 1)}${meter('HIGH', 'high', 1)}</div>
+          </div>
+          <div class="rule" data-rule></div>
+          <div class="hint" data-route></div>
+        </div>`)
+      .join('');
+    state.panelGame = state.game;
   }
 
   function hud() {
     const g = state.game;
+    if (state.panelGame !== g) buildPanels();
     const secs = Math.floor(g.elapsed / 1000);
-    const items = [
-      ['Level', state.levelName],
-      ['Lives', '♥ '.repeat(Math.max(0, g.lives)).trim() || '0'],
-      ['Gems', `${g.totalGems - g.gems.size} / ${g.totalGems}`],
-      ['Time', `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`],
-      ['Score', g.score],
-    ];
-    $('play-hud').innerHTML = items.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+    const values = {
+      Level: state.levelName,
+      Lives: String(Math.max(0, g.lives)),
+      Gems: `${g.totalGems - g.gems.size} / ${g.totalGems}`,
+      Time: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`,
+      Score: String(g.score),
+    };
+    for (const [k, v] of Object.entries(values)) {
+      const el = document.querySelector(`[data-hud="${k}"]`);
+      if (el.textContent !== v) el.textContent = v;
+    }
     $('play-pause').textContent = state.paused ? 'Resume' : 'Pause';
   }
-
-  const bar = (v, color) => `<div class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%;background:${color}"></i></div>`;
 
   function brainPanel() {
     const g = state.game;
     const meta = MM.search.ALGORITHMS[g.algorithm];
-    $('play-brain').innerHTML = g.hunters
-      .map((h, k) => {
-        const f = h.fuzzy;
-        const fired = f.rules.filter((r) => r.strength > 0).sort((a, b) => b.strength - a.strength).slice(0, 2);
-        const deg = (name, labels) =>
-          labels.map((l) => `<div class="mf"><span>${l.toLowerCase()}</span>${bar(f.degrees[name][l], '#818cf8')}<em>${f.degrees[name][l].toFixed(2)}</em></div>`).join('');
-        return `<div class="hunter">
-          <div class="hrow"><span class="dot" style="background:${h.color}"></span><b>Hunter ${k + 1}</b>
-            <span class="pill" style="background:${MODE_COLORS[h.mode]};color:#0b0e1c">${h.mode}</span></div>
-          <div class="mf"><span>energy</span>${bar(h.energy / 100, '#4ade80')}<em>${Math.round(h.energy)}</em></div>
-          <div class="mf"><span>aggression</span>${bar(f.aggression / 100, MODE_COLORS[h.mode])}<em>${f.aggression.toFixed(0)}</em></div>
-          <div class="fz">
-            <div><small>distance = ${h.distance} steps</small>${deg('distance', ['NEAR', 'MEDIUM', 'FAR'])}</div>
-            <div><small>energy = ${Math.round(h.energy)}</small>${deg('energy', ['LOW', 'MEDIUM', 'HIGH'])}</div>
-          </div>
-          <div class="rules">${fired.map((r) => `IF distance is <b>${r.if.distance}</b> AND energy is <b>${r.if.energy}</b> THEN <b>${r.then}</b> <em>(${r.strength.toFixed(2)})</em>`).join('<br>')}</div>
-          <div class="hint">${meta.label} route: ${h.path.length - 1} steps, ${h.search.expanded} cells expanded</div>
-        </div>`;
-      })
-      .join('');
+    g.hunters.forEach((h, k) => {
+      const box = document.querySelector(`[data-h="${k}"]`);
+      if (!box) return;
+      const f = h.fuzzy;
+      const set = (key, v, text) => {
+        box.querySelector(`[data-k="${key}"]`).style.width = `${Math.round(Math.max(0, Math.min(1, v)) * 100)}%`;
+        box.querySelector(`[data-v="${key}"]`).textContent = text;
+      };
+      const mode = box.querySelector('[data-mode]');
+      mode.textContent = h.mode;
+      mode.className = 'mode ' + h.mode;
+      set('energy', h.energy / 100, Math.round(h.energy));
+      set('aggr', f.aggression / 100, f.aggression.toFixed(0));
+      for (const l of ['NEAR', 'MEDIUM', 'FAR']) set(l, f.degrees.distance[l], f.degrees.distance[l].toFixed(2));
+      set('LOW', f.degrees.energy.LOW, f.degrees.energy.LOW.toFixed(2));
+      set('E_MEDIUM', f.degrees.energy.MEDIUM, f.degrees.energy.MEDIUM.toFixed(2));
+      set('HIGH', f.degrees.energy.HIGH, f.degrees.energy.HIGH.toFixed(2));
+      box.querySelector('[data-dist]').textContent = `distance ${h.distance} steps`;
+      box.querySelector('[data-en]').textContent = `energy ${Math.round(h.energy)}`;
+      const top = f.rules.reduce((a, b) => (b.strength > a.strength ? b : a));
+      box.querySelector('[data-rule]').innerHTML = `IF distance is <b>${top.if.distance}</b> AND energy is <b>${top.if.energy}</b> THEN <b>${top.then}</b> &nbsp;${top.strength.toFixed(2)}`;
+      box.querySelector('[data-route]').textContent = `${meta.label} route: ${h.path.length - 1} steps, ${h.search.expanded} cells expanded`;
+    });
   }
 
   function loop(t) {

@@ -4,7 +4,12 @@
   'use strict';
   const MM = root.MazeMind;
   const $ = (id) => document.getElementById(id);
-  const SET_COLORS = ['#38bdf8', '#fbbf24', '#f87171'];
+  // the three sets of a variable are told apart by line style, not colour
+  const SET_STYLES = [
+    { color: '#ffffff', dash: [] },
+    { color: '#8c8c8c', dash: [] },
+    { color: '#ffffff', dash: [5, 4] },
+  ];
 
   function setupCanvas(canvas, w, h) {
     const dpr = root.devicePixelRatio || 1;
@@ -26,19 +31,19 @@
     const X = (v) => pad.l + ((v - variable.min) / (variable.max - variable.min)) * (w - pad.l - pad.r);
     const Y = (m) => h - pad.b - m * (h - pad.t - pad.b);
     ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = '#2a3256';
+    ctx.strokeStyle = '#262626';
     ctx.beginPath();
     ctx.moveTo(pad.l, Y(0));
     ctx.lineTo(w - pad.r, Y(0));
     ctx.stroke();
-    ctx.fillStyle = '#9aa3c7';
-    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillStyle = '#6b6b6b';
+    ctx.font = `12px ${MM.render.FONT}`;
     ctx.fillText(`${variable.min}`, pad.l, h - 6);
     ctx.textAlign = 'right';
     ctx.fillText(`${variable.max} ${unit}`, w - pad.r, h - 6);
     ctx.textAlign = 'left';
     if (curve) {
-      ctx.fillStyle = 'rgba(45, 212, 191, 0.28)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
       ctx.beginPath();
       ctx.moveTo(X(variable.min), Y(0));
       curve.forEach((m, k) => ctx.lineTo(X(variable.min + (k * (variable.max - variable.min)) / (curve.length - 1)), Y(m)));
@@ -46,7 +51,8 @@
       ctx.fill();
     }
     Object.keys(variable.sets).forEach((label, k) => {
-      ctx.strokeStyle = SET_COLORS[k];
+      ctx.strokeStyle = SET_STYLES[k].color;
+      ctx.setLineDash(SET_STYLES[k].dash);
       ctx.lineWidth = 2;
       ctx.beginPath();
       for (let s = 0; s <= 200; s++) {
@@ -56,8 +62,9 @@
         else ctx.moveTo(X(v), y);
       }
       ctx.stroke();
-      ctx.fillStyle = SET_COLORS[k];
-      ctx.font = '700 11px system-ui, sans-serif';
+      ctx.setLineDash([]);
+      ctx.fillStyle = SET_STYLES[k].color;
+      ctx.font = `700 11px ${MM.render.FONT}`;
       const [, ...p] = variable.sets[label];
       const peak = (p[1] + p[p.length - 2]) / 2;
       ctx.textAlign = 'center';
@@ -74,8 +81,8 @@
       ctx.stroke();
       ctx.setLineDash([]);
     };
-    if (marker !== undefined) line(marker, '#e6e9f5');
-    if (crisp !== undefined) line(crisp, '#2dd4bf');
+    if (marker !== undefined) line(marker, '#a1a1a1');
+    if (crisp !== undefined) line(crisp, '#e5484d');
   }
 
   function update() {
@@ -94,7 +101,7 @@
     const cells = document.querySelectorAll('#fz-rules td[data-d]');
     cells.forEach((td) => {
       const r = out.rules.find((x) => x.if.distance === td.dataset.d && x.if.energy === td.dataset.e);
-      td.style.background = `rgba(45, 212, 191, ${0.08 + r.strength * 0.6})`;
+      td.style.background = `rgba(255, 255, 255, ${0.03 + r.strength * 0.32})`;
       td.innerHTML = `${r.then}<br><small>${r.strength.toFixed(2)}</small>`;
     });
   }

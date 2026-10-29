@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MazeMind</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d1020'/%3E%3Cpath d='M7 7h18v4H11v6h10v8H7v-4h10v-2H7z' fill='%232dd4bf'/%3E%3Ccircle cx='23' cy='22' r='3' fill='%23facc15'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Cpath d='M6 6h20v4H10v6h12v10H6v-4h12v-2H6z' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span class="logo"></span>MazeMind <small>AI &amp; Soft Computing project</small></div>
-    <nav class="tabs">
+    <div class="brand">MazeMind<small>AI &amp; Soft Computing project</small></div>
+    <nav class="tabs" aria-label="Screens">
       <a href="#play">Play</a>
       <a href="#lab">Search Lab</a>
       <a href="#evolve">Maze Evolution</a>
@@ -21,11 +21,11 @@
   <main>
     <section class="view" id="view-play">
       <h2>Escape the hunters</h2>
-      <p class="sub">Collect every <b style="color:#22d3ee">gem</b>, then reach the <b style="color:#4ade80">exit</b>. Move with <kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>P</kbd> pause, <kbd>R</kbd> restart.</p>
+      <p class="sub">Collect every gem, then reach the exit. <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move, <kbd>P</kbd> pause, <kbd>R</kbd> restart this maze.</p>
       <div class="layout">
         <div>
           <div class="toolbar">
-            <select id="play-level" title="Level"></select>
+            <select id="play-level" aria-label="Level"></select>
             <label class="inline">Hunters plan with
               <select id="play-algo">
                 <option value="astar">A*</option>
@@ -35,23 +35,23 @@
               </select>
             </label>
             <label class="inline"><input type="checkbox" id="play-thinking" checked> Show AI thinking</label>
-            <span style="flex: 1"></span>
+            <span class="spacer"></span>
             <button id="play-pause">Pause</button>
             <button id="play-new" class="primary">New maze</button>
           </div>
-          <div class="hud stats5" id="play-hud"></div>
-          <div class="stage" id="play-stage"><canvas id="play-canvas"></canvas></div>
+          <div class="figures wide" id="play-hud" aria-live="polite"></div>
+          <div class="stage" id="play-stage"><canvas id="play-canvas" aria-label="Maze"></canvas></div>
           <div class="legend">
-            <span><i style="background:#facc15"></i>you</span>
-            <span><i style="background:#22d3ee"></i>gem</span>
-            <span><i style="background:#4ade80"></i>exit (opens after all gems)</span>
-            <span><i style="background:#f87171"></i>hunter + its planned route (dashed) and searched cells (tinted)</span>
+            <span><i style="background:#fff;border-radius:50%"></i>you</span>
+            <span><i style="border:2px solid #fff;transform:rotate(45deg) scale(.8)"></i>gem</span>
+            <span><i style="border:2px solid #fff"></i>exit, opens after all gems</span>
+            <span><i style="background:#e5484d"></i>hunter, dashed line = its planned route, tint = cells its search expanded</span>
           </div>
         </div>
         <aside>
-          <div class="card">
-            <h3>Hunter brains (fuzzy logic)</h3>
-            <p class="hint">Each step: A* measures the distance to you, the fuzzy rules turn distance + energy into aggression, aggression picks the mode, then the search plans the route.</p>
+          <div class="block">
+            <span class="label">Hunter brains</span>
+            <p class="hint">Each step: A* measures the distance to you, fuzzy rules turn distance and energy into aggression, aggression picks the mode, the search plans the route.</p>
             <div id="play-brain"></div>
           </div>
         </aside>
@@ -64,48 +64,49 @@
       <div class="layout">
         <div>
           <div class="toolbar">
-            <select id="lab-algo" title="Algorithm">
-              <option value="astar">A* search</option>
-              <option value="bfs">Breadth-first search</option>
-              <option value="dfs">Depth-first search</option>
-              <option value="greedy">Greedy best-first</option>
+            <select id="lab-algo" aria-label="Algorithm">
+              <option value="astar">A*</option>
+              <option value="bfs">BFS</option>
+              <option value="dfs">DFS</option>
+              <option value="greedy">Greedy</option>
             </select>
-            <select id="lab-heuristic" title="Heuristic">
-              <option value="manhattan">Manhattan h(n)</option>
-              <option value="euclidean">Euclidean h(n)</option>
-              <option value="none">No heuristic (Dijkstra)</option>
-            </select>
-            <label class="inline">Speed <input id="lab-speed" type="range" min="1" max="40" value="6"></label>
+            <label class="inline">h(n)
+              <select id="lab-heuristic">
+                <option value="manhattan">Manhattan</option>
+                <option value="euclidean">Euclidean</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+            <label class="inline">Speed <input id="lab-speed" type="range" min="1" max="40" value="6" style="width: 96px"></label>
             <button id="lab-run" class="primary">Run</button>
             <button id="lab-compare">Compare all</button>
-            <span style="flex: 1"></span>
+            <span class="spacer"></span>
             <button id="lab-new">New maze</button>
             <button id="lab-field">Open field</button>
-            <button id="lab-clear">Clear walls</button>
+            <button id="lab-clear">Clear</button>
           </div>
-          <div class="stage" id="lab-stage"><canvas id="lab-canvas"></canvas></div>
+          <div class="stage" id="lab-stage"><canvas id="lab-canvas" aria-label="Search grid"></canvas></div>
           <div class="legend">
-            <span><i style="background: rgba(192,132,252,.7)"></i>expanded (closed set)</span>
-            <span><i style="background: rgba(251,191,36,.8)"></i>frontier (open set)</span>
-            <span><i style="background: #2dd4bf"></i>path found</span>
-            <span><i style="background: #4ade80"></i>start</span>
-            <span><i style="background: #f87171"></i>goal</span>
+            <span><i style="background:radial-gradient(#707070 0 30%, transparent 31%);background:linear-gradient(#707070,#707070) center/4px 4px no-repeat"></i>expanded (closed set)</span>
+            <span><i style="border:1.5px solid #d4d4d4;transform:scale(.7)"></i>frontier (open set)</span>
+            <span><i style="background:#fff"></i>path found</span>
+            <span><i style="border:2px solid #fff"></i>S start, G goal</span>
           </div>
         </div>
         <aside>
-          <div class="card">
-            <h3>Live statistics</h3>
-            <div class="stats" id="lab-stats"></div>
+          <div class="block">
+            <span class="label">Live statistics</span>
+            <div class="figures" id="lab-stats"></div>
           </div>
-          <div class="card">
-            <h3>How this algorithm works</h3>
+          <div class="block">
+            <span class="label">How this algorithm works</span>
             <p id="lab-explain"></p>
           </div>
-          <div class="card">
-            <h3>Comparison on this maze</h3>
+          <div class="block">
+            <span class="label">Comparison on this maze</span>
             <table class="results">
-              <thead><tr><th>Algorithm</th><th>Path</th><th>Expanded</th><th>Max frontier</th><th>ms</th><th>Shortest?</th></tr></thead>
-              <tbody id="lab-results"><tr><td colspan="6" class="muted">Press <b>Compare all</b>.</td></tr></tbody>
+              <thead><tr><th>Algorithm</th><th>Path</th><th>Expanded</th><th>Frontier</th><th>ms</th></tr></thead>
+              <tbody id="lab-results"><tr><td colspan="5" class="hint">Press Compare all.</td></tr></tbody>
             </table>
             <p class="hint" id="lab-compare-note"></p>
           </div>
@@ -115,56 +116,53 @@
 
     <section class="view" id="view-evolve">
       <h2>Maze Evolution</h2>
-      <p class="sub">A genetic algorithm breeds mazes. Each maze's fitness is measured with A*: a long escape route, many dead ends and a few escape loops make a maze "fitter".</p>
+      <p class="sub">A genetic algorithm breeds mazes. Each maze's fitness is measured with A*: a long escape route, many dead ends and a few escape loops make a maze fitter.</p>
       <div class="layout">
         <div>
           <div class="toolbar">
-            <label class="inline">Size
-              <select id="evo-size">
-                <option value="small">Small (10 x 7 rooms)</option>
-                <option value="medium" selected>Medium (14 x 9 rooms)</option>
-                <option value="large">Large (17 x 11 rooms)</option>
-              </select>
-            </label>
-            <label class="inline">Population <input id="evo-pop" type="number" min="10" max="200" value="60" style="width: 72px"></label>
-            <label class="inline">Generations <input id="evo-gens" type="number" min="10" max="1000" value="150" style="width: 80px"></label>
-            <span style="flex: 1"></span>
+            <select id="evo-size" aria-label="Maze size">
+              <option value="small">Small, 10 x 7 rooms</option>
+              <option value="medium" selected>Medium, 14 x 9 rooms</option>
+              <option value="large">Large, 17 x 11 rooms</option>
+            </select>
+            <label class="inline">Population <input id="evo-pop" type="number" min="10" max="200" value="60" style="width: 76px"></label>
+            <label class="inline">Generations <input id="evo-gens" type="number" min="10" max="1000" value="150" style="width: 84px"></label>
+            <span class="spacer"></span>
             <button id="evo-reset">New population</button>
             <button id="evo-run" class="primary">Evolve</button>
             <button id="evo-play">Play this maze</button>
           </div>
-          <div class="stage" id="evo-maze-stage"><canvas id="evo-maze"></canvas></div>
+          <div class="stage" id="evo-maze-stage"><canvas id="evo-maze" aria-label="Fittest maze"></canvas></div>
           <div class="legend">
-            <span><i style="background:#2dd4bf"></i>A* escape route of the fittest maze</span>
-            <span><i style="background:#4ade80"></i>start</span>
-            <span><i style="background:#f87171"></i>exit</span>
+            <span><i style="background:#fff"></i>A* escape route of the fittest maze</span>
+            <span><i style="border:2px solid #fff"></i>S start, E exit</span>
           </div>
-          <div class="card" style="margin-top: 14px">
-            <h3>Fitness per generation</h3>
-            <div id="evo-chart-stage"><canvas id="evo-chart"></canvas></div>
-            <div class="legend"><span><i style="background:#2dd4bf"></i>best</span><span><i style="background:#c084fc"></i>population average</span></div>
+          <div style="margin-top: 26px">
+            <span class="label">Fitness per generation</span>
+            <div id="evo-chart-stage"><canvas id="evo-chart" aria-label="Fitness chart"></canvas></div>
+            <div class="legend"><span><i style="background:#fff;height:2px"></i>best maze</span><span><i style="background:#6b6b6b;height:2px"></i>population average</span></div>
           </div>
         </div>
         <aside>
-          <div class="card">
-            <h3>Fittest maze so far</h3>
-            <div class="stats" id="evo-stats"></div>
+          <div class="block">
+            <span class="label">Fittest maze so far</span>
+            <div class="figures" id="evo-stats"></div>
           </div>
-          <div class="card">
-            <h3>What the designer wants</h3>
+          <div class="block">
+            <span class="label">What the designer wants</span>
             <p class="hint">Fitness weights. Change them and evolve again to breed a different kind of maze.</p>
-            <label class="field">Long escape route <span><input id="evo-w-path" type="range" min="0" max="2" step="0.1" value="1"> <b id="evo-w-path-v">1</b></span></label>
-            <label class="field">Many dead ends <span><input id="evo-w-dead" type="range" min="0" max="2" step="0.1" value="0.6"> <b id="evo-w-dead-v">0.6</b></span></label>
-            <label class="field">A few escape loops <span><input id="evo-w-loops" type="range" min="0" max="2" step="0.1" value="0.6"> <b id="evo-w-loops-v">0.6</b></span></label>
-            <label class="field">Mutation rate <span><input id="evo-mut" type="range" min="0.5" max="10" step="0.5" value="1"> <b id="evo-mut-v">1%</b></span></label>
+            <label class="field">Long escape route <b id="evo-w-path-v">1</b><input id="evo-w-path" type="range" min="0" max="2" step="0.1" value="1"></label>
+            <label class="field">Many dead ends <b id="evo-w-dead-v">0.6</b><input id="evo-w-dead" type="range" min="0" max="2" step="0.1" value="0.6"></label>
+            <label class="field">A few escape loops <b id="evo-w-loops-v">0.6</b><input id="evo-w-loops" type="range" min="0" max="2" step="0.1" value="0.6"></label>
+            <label class="field">Mutation rate <b id="evo-mut-v">1%</b><input id="evo-mut" type="range" min="0.5" max="10" step="0.5" value="1"></label>
           </div>
-          <div class="card">
-            <h3>One generation</h3>
-            <p><b>1. Evaluate:</b> decode each chromosome into a maze, run A* from start to exit, count dead ends and loops.</p>
-            <p><b>2. Elitism:</b> the 2 fittest mazes are copied unchanged.</p>
-            <p><b>3. Selection:</b> tournament of 3 random mazes, the fittest becomes a parent.</p>
-            <p><b>4. Crossover:</b> uniform, each passage bit comes from one of the two parents.</p>
-            <p><b>5. Mutation:</b> each bit flips (wall &harr; passage) with the mutation rate.</p>
+          <div class="block">
+            <span class="label">One generation</span>
+            <p><b>1. Evaluate.</b> Decode each chromosome into a maze, run A* from start to exit, count dead ends and loops.</p>
+            <p><b>2. Elitism.</b> The 2 fittest mazes are copied unchanged.</p>
+            <p><b>3. Selection.</b> Tournament of 3 random mazes, the fittest becomes a parent.</p>
+            <p><b>4. Crossover.</b> Uniform: each passage bit comes from one of the two parents.</p>
+            <p><b>5. Mutation.</b> Each bit flips, wall to passage or back, with the mutation rate.</p>
           </div>
         </aside>
       </div>
@@ -174,42 +172,42 @@
       <h2>How it works</h2>
       <p class="sub">MazeMind uses three AI techniques from the syllabus: <b>heuristic search</b> (A*, compared with BFS, DFS and greedy best-first), <b>fuzzy logic</b> and a <b>genetic algorithm</b>.</p>
 
-      <div class="card">
-        <h3>What a hunter does on every step</h3>
+      <div class="section">
+        <span class="label">What a hunter does on every step</span>
         <div class="flow">
           <div><b>1. Sense</b><span>A* measures the real distance to the player through the maze.</span></div>
-          <div><b>2. Feel</b><span>Fuzzy logic turns distance + energy into an aggression value.</span></div>
-          <div><b>3. Decide</b><span>Aggression &ge; 62: CHASE, &ge; 38: AMBUSH (cut you off), else PATROL or REST.</span></div>
+          <div><b>2. Feel</b><span>Fuzzy logic turns distance and energy into an aggression value.</span></div>
+          <div><b>3. Decide</b><span>Aggression 62 or more: CHASE. 38 or more: AMBUSH. Otherwise PATROL, or REST when tired.</span></div>
           <div><b>4. Plan</b><span>The chosen search algorithm plans a route to the target.</span></div>
           <div><b>5. Act</b><span>Take one step. Chasing costs energy, resting restores it.</span></div>
         </div>
       </div>
 
-      <div class="card">
+      <div class="section">
         <h3>1. Search algorithms</h3>
         <table class="results">
           <thead><tr><th>Algorithm</th><th>Frontier</th><th>Expands next</th><th>Complete</th><th>Shortest path</th><th>Uses h(n)</th></tr></thead>
           <tbody>
-            <tr><td><b>BFS</b></td><td>queue (FIFO)</td><td>the oldest cell</td><td>yes</td><td>yes (equal step costs)</td><td>no</td></tr>
-            <tr><td><b>DFS</b></td><td>stack (LIFO)</td><td>the newest cell</td><td>yes (finite grid)</td><td>no</td><td>no</td></tr>
-            <tr><td><b>Greedy best-first</b></td><td>priority queue</td><td>lowest h(n)</td><td>yes (finite grid)</td><td>no</td><td>yes</td></tr>
+            <tr><td><b>BFS</b></td><td>queue (FIFO)</td><td>the oldest cell</td><td>yes</td><td>yes, equal step costs</td><td>no</td></tr>
+            <tr><td><b>DFS</b></td><td>stack (LIFO)</td><td>the newest cell</td><td>yes, finite grid</td><td>no</td><td>no</td></tr>
+            <tr><td><b>Greedy best-first</b></td><td>priority queue</td><td>lowest h(n)</td><td>yes, finite grid</td><td>no</td><td>yes</td></tr>
             <tr><td><b>A*</b></td><td>priority queue</td><td>lowest f(n) = g(n) + h(n)</td><td>yes</td><td>yes, if h is admissible</td><td>yes</td></tr>
           </tbody>
         </table>
-        <p><b>g(n)</b> = steps from the start to n, <b>h(n)</b> = estimated steps from n to the goal. We use the Manhattan distance |x<sub>1</sub> &minus; x<sub>2</sub>| + |y<sub>1</sub> &minus; y<sub>2</sub>|: you can only move up, down, left or right, so the true distance is never shorter. The heuristic is <b>admissible</b> (never overestimates) and <b>consistent</b>, which is why A* returns the shortest path while expanding fewer cells than BFS. Try it in the <a href="#lab">Search Lab</a>.</p>
+        <p><b>g(n)</b> is the number of steps from the start to n, <b>h(n)</b> the estimated steps from n to the goal. We use the Manhattan distance |x<sub>1</sub> &minus; x<sub>2</sub>| + |y<sub>1</sub> &minus; y<sub>2</sub>|: you can only move up, down, left or right, so the real distance is never shorter. The heuristic is <b>admissible</b> (never overestimates) and <b>consistent</b>, which is why A* returns the shortest path while expanding fewer cells than BFS. Try it in the <a href="#lab">Search Lab</a>.</p>
       </div>
 
-      <div class="card">
-        <h3>2. Fuzzy logic: the hunter's mood (Mamdani inference)</h3>
-        <p>Instead of hard rules like "if distance &lt; 8 then chase", each input belongs to several sets <i>partly</i>. A distance of 7 steps is a little NEAR and a little MEDIUM at the same time, so the hunter's behaviour changes smoothly.</p>
+      <div class="section">
+        <h3>2. Fuzzy logic: the hunter's mood</h3>
+        <p>Instead of hard rules like "if distance &lt; 8 then chase", each input belongs to several sets <i>partly</i>. A distance of 7 steps is a little NEAR and a little MEDIUM at the same time, so the hunter's behaviour changes smoothly. This is Mamdani inference.</p>
         <div class="grid2">
-          <label class="field">Distance to player <span><input id="fz-d" type="range" min="0" max="40" value="6"> <b id="fz-d-v"></b></span></label>
-          <label class="field">Hunter energy <span><input id="fz-e" type="range" min="0" max="100" value="70"> <b id="fz-e-v"></b></span></label>
+          <label class="field">Distance to player <b id="fz-d-v"></b><input id="fz-d" type="range" min="0" max="40" value="6"></label>
+          <label class="field">Hunter energy <b id="fz-e-v"></b><input id="fz-e" type="range" min="0" max="100" value="70"></label>
         </div>
         <div class="fzgrid">
           <div><small>Input: distance</small><canvas id="fz-dist"></canvas></div>
           <div><small>Input: energy</small><canvas id="fz-energy"></canvas></div>
-          <div><small>Output: aggression (shaded = combined rule output, line = centroid)</small><canvas id="fz-aggr"></canvas></div>
+          <div><small>Output: aggression. Shaded = combined rule output, dashed = centroid</small><canvas id="fz-aggr"></canvas></div>
         </div>
         <p id="fz-out" class="fzout"></p>
         <table class="results rulegrid" id="fz-rules">
@@ -220,13 +218,13 @@
             <tr><th>FAR</th><td data-d="FAR" data-e="LOW"></td><td data-d="FAR" data-e="MEDIUM"></td><td data-d="FAR" data-e="HIGH"></td></tr>
           </tbody>
         </table>
-        <p><b>Steps:</b> (1) <b>fuzzify</b> both inputs with the triangle/trapezoid membership functions; (2) each of the 9 rules fires with strength = <b>min</b> of its two memberships (fuzzy AND); (3) each rule <b>clips</b> its output set at that strength; (4) the clipped sets are combined with <b>max</b>; (5) <b>defuzzify</b> with the centroid (centre of gravity) to get one number.</p>
+        <p><b>Steps:</b> (1) <b>fuzzify</b> both inputs with the triangle and trapezoid membership functions; (2) each of the 9 rules fires with strength = <b>min</b> of its two memberships (fuzzy AND); (3) each rule <b>clips</b> its output set at that strength; (4) the clipped sets are combined with <b>max</b>; (5) <b>defuzzify</b> with the centroid, the centre of gravity, to get one number.</p>
       </div>
 
-      <div class="card">
+      <div class="section">
         <h3>3. Genetic algorithm: breeding harder mazes</h3>
-        <p><b>Chromosome:</b> one bit for every place where two neighbouring rooms could be joined: 1 = passage, 0 = wall. A 14 &times; 9 maze has 13&times;9 + 14&times;8 = 229 genes.</p>
-        <p><b>Fitness:</b> mazes whose exit cannot be reached score below 0.25. Solvable mazes score 0.25 + reach&sup2; &times; (weighted mix of A* route length, dead ends and escape loops), where reach = share of rooms connected to the start and loops = passages &minus; rooms + 1.</p>
+        <p><b>Chromosome:</b> one bit for every place where two neighbouring rooms could be joined, 1 = passage, 0 = wall. A 14 &times; 9 maze has 13&times;9 + 14&times;8 = 229 genes.</p>
+        <p><b>Fitness:</b> mazes whose exit cannot be reached score below 0.25. Solvable mazes score 0.25 + reach&sup2; &times; a weighted mix of A* route length, dead ends and escape loops, where reach is the share of rooms connected to the start and loops = passages &minus; rooms + 1.</p>
         <p><b>Operators:</b> elitism (keep the best 2), tournament selection (size 3), uniform crossover (rate 0.9), bit-flip mutation (rate 1%). The search algorithm is reused inside the fitness function, which links the two halves of the project. Watch it in <a href="#evolve">Maze Evolution</a>.</p>
       </div>
     </section>

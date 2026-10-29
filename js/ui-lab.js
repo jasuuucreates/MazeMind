@@ -74,14 +74,12 @@
     const ctx = $('lab-canvas').getContext('2d');
     MM.render.drawGrid(ctx, grid, cell);
     if (overlay) {
-      MM.render.fillCells(ctx, grid, cell, overlay.closed, MM.render.COLORS.closed, 0);
-      MM.render.fillCells(ctx, grid, cell, overlay.frontier, MM.render.COLORS.frontier, Math.max(1, cell * 0.2));
-      if (overlay.path) MM.render.drawPath(ctx, grid, cell, overlay.path);
+      MM.render.dotCells(ctx, grid, cell, overlay.closed, MM.render.COLORS.closed);
+      MM.render.outlineCells(ctx, grid, cell, overlay.frontier, MM.render.COLORS.frontier);
+      if (overlay.path) MM.render.drawPath(ctx, grid, cell, overlay.path, MM.render.COLORS.path, Math.max(2, cell * 0.24));
     }
-    MM.render.drawDot(ctx, grid, cell, state.start, MM.render.COLORS.start, 0.42, 10);
-    MM.render.drawLabel(ctx, grid, cell, state.start, 'S');
-    MM.render.drawDot(ctx, grid, cell, state.goal, MM.render.COLORS.goal, 0.42, 10);
-    MM.render.drawLabel(ctx, grid, cell, state.goal, 'G');
+    MM.render.drawMarker(ctx, grid, cell, state.start, 'S', true);
+    MM.render.drawMarker(ctx, grid, cell, state.goal, 'G', false);
   }
 
   // replays a finished search: `upto` trace steps of closed + frontier cells
@@ -133,7 +131,7 @@
   function setStats(res, step, frontier) {
     const box = $('lab-stats');
     if (!res) {
-      box.innerHTML = '<p class="muted" style="grid-column: span 2; margin: 0">Press <b>Run</b> to watch the search.</p>';
+      box.innerHTML = '<div style="grid-column: span 2"><span>Press Run to watch the search.</span></div>';
       return;
     }
     const done = step >= res.trace.length;
@@ -143,7 +141,7 @@
       [done ? (res.found ? res.cost : 'none') : '...', 'path length'],
       [done ? res.timeMs.toFixed(2) + ' ms' : '...', 'search time'],
     ];
-    box.innerHTML = items.map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+    box.innerHTML = items.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
   }
 
   function compareAll() {
@@ -155,19 +153,18 @@
     $('lab-results').innerHTML = results
       .map((r) => {
         const meta = MM.search.ALGORITHMS[r.algorithm];
-        const isOpt = r.found && r.cost === shortest;
+        const extra = r.found && r.cost > shortest ? ` <span class="hint">+${r.cost - shortest}</span>` : '';
         return `<tr class="${r === best ? 'best' : ''}">
-          <td><b>${meta.label}</b></td>
-          <td>${r.found ? r.cost : 'no path'}</td>
+          <td>${meta.label}</td>
+          <td>${r.found ? r.cost + extra : 'none'}</td>
           <td>${r.expanded}</td>
           <td>${r.maxFrontier}</td>
           <td>${r.timeMs.toFixed(2)}</td>
-          <td>${r.found ? (isOpt ? 'yes' : 'no') : '-'}</td>
         </tr>`;
       })
       .join('');
     $('lab-compare-note').textContent = best
-      ? `${MM.search.ALGORITHMS[best.algorithm].label} found a shortest path while expanding the fewest cells.`
+      ? `${MM.search.ALGORITHMS[best.algorithm].label} found a shortest path while expanding the fewest cells. "+n" = steps longer than the shortest path.`
       : 'The goal cannot be reached: every algorithm explores the start region and stops.';
     const chosen = results.find((r) => r.algorithm === $('lab-algo').value);
     state.shownResult = chosen;

@@ -16,7 +16,6 @@
 
   const STEP_MS = { CHASE: 220, AMBUSH: 250, PATROL: 320, REST: 320 }; // time per hunter step
   const ENERGY_COST = { CHASE: 2.4, AMBUSH: 1.3, PATROL: -0.6, REST: -7 }; // negative = recovers
-  const HUNTER_COLORS = ['#f87171', '#fb923c', '#e879f9', '#38bdf8'];
   const GRACE_MS = 1500; // hunters freeze for a moment after catching the player
   const SENSOR_MAX = 40;
 
@@ -122,7 +121,6 @@
         target: spawn,
         waypoint: -1,
         timer: 0,
-        color: HUNTER_COLORS[id % HUNTER_COLORS.length],
         distance: Infinity,
         fuzzy: null,
         search: null,
