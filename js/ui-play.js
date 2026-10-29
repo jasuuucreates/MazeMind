@@ -41,6 +41,7 @@
     state.game = new MM.game.Game(state.level, { algorithm: $('play-algo').value, speed: Number($('play-diff').value), seed: (Math.random() * 1e9) >>> 0 });
     state.paused = false;
     state.newBest = null;
+    state.heard = 0; // how many game events already played a sound
     state.vis = {};
     state.buffer = null;
     resize();
@@ -386,6 +387,13 @@
       }
       g.update(dt);
     }
+    // play a sound for every game event that happened since the last frame
+    if (g) {
+      while (state.heard < g.events.length) {
+        const ev = g.events[state.heard++];
+        if (MM.sound[ev.type]) MM.sound[ev.type]();
+      }
+    }
     // a win can also happen on a key press between frames, so check it outside the running branch
     if (g && g.status === 'won' && state.newBest === null) state.newBest = recordBest(g);
     if (g && visible) {
@@ -407,6 +415,7 @@
     if (dir) {
       ev.preventDefault();
       if (ev.repeat) return;
+      MM.sound.unlock();
       const now = performance.now();
       const wasIdle = state.keys.length === 0;
       state.keys = state.keys.filter((d) => d !== dir).concat(dir);
