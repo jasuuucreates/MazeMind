@@ -423,7 +423,11 @@
         if (dir) state.keys = state.keys.filter((d) => d !== dir);
       });
       // releasing keys while the window is in the background must not leave the player walking
-      root.addEventListener('blur', () => (state.keys = []));
+      root.addEventListener('blur', () => {
+        state.keys = [];
+        // switching to another window pauses the game instead of leaving you to the hunters
+        if (state.game && state.game.status === 'playing' && MM.current === 'play') state.paused = true;
+      });
       root.addEventListener('resize', () => play.started && resize());
       newGame();
       state.raf = requestAnimationFrame(loop);
