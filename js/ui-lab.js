@@ -21,6 +21,7 @@
     anim: null,
     drag: null,
     shownResult: null,
+    stepper: null, // { res, at } while stepping through a search by hand
   };
 
   function newMaze() {
@@ -49,7 +50,9 @@
   function reset() {
     stop();
     state.shownResult = null;
+    state.stepper = null;
     setStats(null);
+    $('lab-step-info').textContent = '';
     draw();
   }
 
@@ -98,6 +101,26 @@
     for (let i = 0; i < inFrontier.length; i++) if (inFrontier[i]) frontier.push(i);
     const done = upto >= res.trace.length;
     return { closed, frontier, path: done ? res.path : null, done };
+  }
+
+  // one expansion per click, with the numbers behind it
+  function step() {
+    stop();
+    if (!state.stepper || state.stepper.at >= state.stepper.res.trace.length) state.stepper = { res: currentSearch(), at: 0 };
+    const { res } = state.stepper;
+    const at = ++state.stepper.at;
+    const ov = overlayAt(res, at);
+    draw(ov);
+    setStats(res, at, ov.frontier.length);
+    const entry = res.trace[at - 1];
+    const { x, y } = state.grid.xy(entry.node);
+    const goal = state.grid.xy(state.goal);
+    const h = MM.search.HEURISTICS[$('lab-heuristic').value](x, y, goal.x, goal.y);
+    let numbers = '';
+    if (res.algorithm === 'astar') numbers = ` g = ${entry.g}, h = ${+h.toFixed(2)}, f = ${+entry.f.toFixed(2)}.`;
+    else if (res.algorithm === 'greedy') numbers = ` h = ${+h.toFixed(2)}.`;
+    const end = at === res.trace.length ? (res.found ? ' Goal reached.' : ' Nothing left to expand: no path.') : '';
+    $('lab-step-info').textContent = `Step ${at}: expanded (${x}, ${y}).${numbers} Added ${entry.pushed.length} cell${entry.pushed.length === 1 ? '' : 's'} to the frontier.${end}`;
   }
 
   function currentSearch(algo) {
@@ -202,6 +225,8 @@
       if (i < 0) return;
       stop();
       state.shownResult = null;
+      state.stepper = null;
+      $('lab-step-info').textContent = '';
       setStats(null);
       if (i === state.start) state.drag = 'start';
       else if (i === state.goal) state.drag = 'goal';
@@ -229,6 +254,7 @@
       newMaze();
       bindCanvas();
       $('lab-run').addEventListener('click', run);
+      $('lab-step').addEventListener('click', step);
       $('lab-compare').addEventListener('click', compareAll);
       $('lab-new').addEventListener('click', newMaze);
       $('lab-field').addEventListener('click', openField);

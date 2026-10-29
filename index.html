@@ -83,8 +83,9 @@
                 <option value="none">None</option>
               </select>
             </label>
-            <label class="inline">Speed <input id="lab-speed" type="range" min="1" max="40" value="6" style="width: 96px"></label>
+            <input id="lab-speed" type="range" min="1" max="40" value="6" style="width: 90px" aria-label="Animation speed" title="Animation speed">
             <button id="lab-run" class="primary">Run</button>
+            <button id="lab-step">Step</button>
             <button id="lab-compare">Compare all</button>
             <span class="spacer"></span>
             <button id="lab-new">New maze</button>
@@ -103,6 +104,7 @@
           <div class="block">
             <span class="label">Live statistics</span>
             <div class="figures" id="lab-stats"></div>
+            <p class="hint" id="lab-step-info" aria-live="polite"></p>
           </div>
           <div class="block">
             <span class="label">How this algorithm works</span>
