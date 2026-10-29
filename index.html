@@ -21,7 +21,7 @@
   <main>
     <section class="view" id="view-play">
       <h2>Escape the hunters</h2>
-      <p class="sub">Collect every gem, then reach the exit. <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move, <kbd>P</kbd> pause, <kbd>R</kbd> restart this maze.</p>
+      <p class="sub">Collect every gem, then reach the exit. <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move, <kbd>P</kbd> pause, <kbd>R</kbd> restart this maze, <kbd>M</kbd> sound.</p>
       <div class="layout">
         <div>
           <div class="toolbar">
@@ -41,6 +41,7 @@
             </label>
             <label class="inline"><input type="checkbox" id="play-thinking" checked> Show AI thinking</label>
             <span class="spacer"></span>
+            <button id="play-mute" aria-pressed="false">Sound on</button>
             <button id="play-pause">Pause</button>
             <button id="play-new" class="primary">New maze</button>
           </div>

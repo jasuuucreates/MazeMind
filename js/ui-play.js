@@ -320,6 +320,18 @@
     return true;
   }
 
+  // sound on/off, remembered between visits
+  function setMuted(muted) {
+    MM.sound.muted = muted;
+    $('play-mute').textContent = muted ? 'Sound off' : 'Sound on';
+    $('play-mute').setAttribute('aria-pressed', String(muted));
+    try {
+      localStorage.setItem('mazemind-muted', muted ? '1' : '0');
+    } catch (e) {
+      // storage blocked: the setting lasts until the page is closed
+    }
+  }
+
   function hud() {
     const g = state.game;
     if (state.panelGame !== g) buildPanels();
@@ -430,6 +442,7 @@
       }
       // a new direction while already moving is picked up on the next step (buffered turn)
     } else if (k === 'p' || k === 'P') state.paused = !state.paused;
+    else if (k === 'm' || k === 'M') setMuted(!MM.sound.muted);
     else if (k === 'r' || k === 'R') newGame(state.level, state.levelName); // same maze again
     else if ((k === 'n' || k === 'N') && state.game.status === 'won') {
       const sel = $('play-level');
@@ -456,6 +469,17 @@
       $('play-pause').addEventListener('click', (ev) => {
         ev.target.blur();
         state.paused = !state.paused;
+      });
+      let savedMute = false;
+      try {
+        savedMute = localStorage.getItem('mazemind-muted') === '1';
+      } catch (e) {
+        savedMute = false;
+      }
+      setMuted(savedMute);
+      $('play-mute').addEventListener('click', (ev) => {
+        ev.target.blur();
+        setMuted(!MM.sound.muted);
       });
       $('play-diff').addEventListener('change', (ev) => {
         ev.target.blur();
