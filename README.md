@@ -19,13 +19,13 @@ Made for the **Artificial Intelligence & Soft Computing** course.
 
 ## Screens
 
-**Play** - the game. The panel on the right shows each hunter's brain live: fuzzy inputs, which rules fired, its aggression, its mode and how many cells its search expanded. Tick "Show AI thinking" to see the planned routes (dashed) and the searched cells (tinted).
+**Play** - the game, 4 levels and 3 difficulties. The panel on the right shows each hunter's brain live: fuzzy inputs, the strongest rule that fired, its aggression, its mode and how many cells its search expanded. Tick "Show AI thinking" to see the planned routes (dashed) and the searched cells (tinted). Your best score per level is remembered, there are sound effects (M to mute), and on a touch screen you drag on the maze to steer.
 
-**Search Lab** - draw walls, drag the start and goal, and watch BFS, DFS, greedy best-first or A* explore step by step. "Compare all" runs all four and shows path length, cells expanded, max frontier size and time.
+**Search Lab** - draw walls, drag the start and goal, and watch BFS, DFS, greedy best-first or A* explore. "Step" expands one cell per click and explains it (for A*: g, h and f). After a search, point at any cell to see when it was expanded. "Compare all" runs all four and shows path length, cells expanded, max frontier size and time.
 
 ![Search Lab](docs/screenshots/search_lab.png)
 
-**Maze Evolution** - runs the genetic algorithm live with a fitness chart. You can change what the "designer" wants (long route, dead ends, loops) and then play the evolved maze.
+**Maze Evolution** - runs the genetic algorithm live with a fitness chart. You can change what the "designer" wants (long route, dead ends, loops), play the evolved maze ("Play it") or save it as a picture ("Save PNG").
 
 ![Maze Evolution](docs/screenshots/maze_evolution.png)
 
@@ -91,8 +91,18 @@ A* finds the same shortest path as BFS but expands fewer cells. Greedy and DFS a
 
 ## Running it
 
-- Open `index.html` in Chrome, Edge or Firefox. It works offline.
-- Controls: arrow keys or WASD to move, P pause, R restart, N next level after a win.
+- Open `index.html` in Chrome, Edge or Firefox. It works offline (the font is included).
+
+| Key | Does |
+|---|---|
+| Arrow keys or WASD | move (hold to keep walking, press early to turn at the next corner) |
+| P | pause |
+| R | restart the same maze |
+| N | next level, after you escape |
+| M | sound on / off |
+| ? | list of shortcuts |
+
+The game pauses by itself when you switch to another tab or window.
 
 Tests (needs Node.js 18 or newer, no packages to install):
 
@@ -100,7 +110,7 @@ Tests (needs Node.js 18 or newer, no packages to install):
 npm test
 ```
 
-57 tests for the grid, the four searches, the maze generator, the fuzzy controller, the game rules and the genetic algorithm.
+61 tests for the grid, the four searches, the maze generator, the fuzzy controller, the game rules and the genetic algorithm. Some search tests run on 10 random mazes instead of one hand-made grid.
 
 ## Files
 
@@ -114,9 +124,19 @@ js/fuzzy.js         fuzzy sets, Mamdani inference, the hunter's rule base
 js/game.js          game rules and hunter AI
 js/genetic.js       genetic algorithm for mazes
 js/render.js        canvas drawing
+js/sound.js         sound effects (Web Audio, no sound files)
 js/ui-*.js          one file per screen
 tests/              node --test unit tests
+fonts/              Source Sans 3 (SIL Open Font License, see fonts/OFL.txt)
 ```
+
+## Demo in 3 minutes
+
+1. **Play**, level 2, "Show AI thinking" on. Point at the brain panel: distance and energy go in, a fuzzy rule fires, aggression comes out, aggression picks the mode.
+2. Switch "Hunters use" to **DFS**: the dashed routes get long and wander. Switch back to **A\***.
+3. **Search Lab**: press **Step** a few times and read the g, h, f line. Then **Compare all**: A* and BFS find the same shortest path, A* expands fewer cells, greedy and DFS find longer paths.
+4. **How it works**: move the distance and energy sliders and watch the rules light up and the centroid move.
+5. **Maze Evolution**: **Evolve**, watch the best fitness climb, then **Play it**.
 
 ## Team
 
