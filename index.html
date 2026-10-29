@@ -114,7 +114,59 @@
 
     <section class="view" id="view-evolve">
       <h2>Maze Evolution</h2>
-      <p class="sub">Coming soon.</p>
+      <p class="sub">A genetic algorithm breeds mazes. Each maze's fitness is measured with A*: a long escape route, many dead ends and a few escape loops make a maze "fitter".</p>
+      <div class="layout">
+        <div>
+          <div class="toolbar">
+            <label class="inline">Size
+              <select id="evo-size">
+                <option value="small">Small (10 x 7 rooms)</option>
+                <option value="medium" selected>Medium (14 x 9 rooms)</option>
+                <option value="large">Large (17 x 11 rooms)</option>
+              </select>
+            </label>
+            <label class="inline">Population <input id="evo-pop" type="number" min="10" max="200" value="60" style="width: 72px"></label>
+            <label class="inline">Generations <input id="evo-gens" type="number" min="10" max="1000" value="150" style="width: 80px"></label>
+            <span style="flex: 1"></span>
+            <button id="evo-reset">New population</button>
+            <button id="evo-run" class="primary">Evolve</button>
+            <button id="evo-play">Play this maze</button>
+          </div>
+          <div class="stage" id="evo-maze-stage"><canvas id="evo-maze"></canvas></div>
+          <div class="legend">
+            <span><i style="background:#2dd4bf"></i>A* escape route of the fittest maze</span>
+            <span><i style="background:#4ade80"></i>start</span>
+            <span><i style="background:#f87171"></i>exit</span>
+          </div>
+          <div class="card" style="margin-top: 14px">
+            <h3>Fitness per generation</h3>
+            <div id="evo-chart-stage"><canvas id="evo-chart"></canvas></div>
+            <div class="legend"><span><i style="background:#2dd4bf"></i>best</span><span><i style="background:#c084fc"></i>population average</span></div>
+          </div>
+        </div>
+        <aside>
+          <div class="card">
+            <h3>Fittest maze so far</h3>
+            <div class="stats" id="evo-stats"></div>
+          </div>
+          <div class="card">
+            <h3>What the designer wants</h3>
+            <p class="hint">Fitness weights. Change them and evolve again to breed a different kind of maze.</p>
+            <label class="field">Long escape route <span><input id="evo-w-path" type="range" min="0" max="2" step="0.1" value="1"> <b id="evo-w-path-v">1</b></span></label>
+            <label class="field">Many dead ends <span><input id="evo-w-dead" type="range" min="0" max="2" step="0.1" value="0.6"> <b id="evo-w-dead-v">0.6</b></span></label>
+            <label class="field">A few escape loops <span><input id="evo-w-loops" type="range" min="0" max="2" step="0.1" value="0.6"> <b id="evo-w-loops-v">0.6</b></span></label>
+            <label class="field">Mutation rate <span><input id="evo-mut" type="range" min="0.5" max="10" step="0.5" value="1"> <b id="evo-mut-v">1%</b></span></label>
+          </div>
+          <div class="card">
+            <h3>One generation</h3>
+            <p><b>1. Evaluate:</b> decode each chromosome into a maze, run A* from start to exit, count dead ends and loops.</p>
+            <p><b>2. Elitism:</b> the 2 fittest mazes are copied unchanged.</p>
+            <p><b>3. Selection:</b> tournament of 3 random mazes, the fittest becomes a parent.</p>
+            <p><b>4. Crossover:</b> uniform, each passage bit comes from one of the two parents.</p>
+            <p><b>5. Mutation:</b> each bit flips (wall &harr; passage) with the mutation rate.</p>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <section class="view" id="view-about">
@@ -128,9 +180,11 @@
   <script src="js/mazegen.js"></script>
   <script src="js/fuzzy.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/genetic.js"></script>
   <script src="js/render.js"></script>
   <script src="js/ui-play.js"></script>
   <script src="js/ui-lab.js"></script>
+  <script src="js/ui-evolve.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

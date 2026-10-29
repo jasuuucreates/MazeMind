@@ -66,7 +66,7 @@
   }
 
   // put the exit, three gems and the hunters into a maze; rooms = cells at odd x and odd y
-  function placeObjects(grid, start, { hunters = 2, rng = Math.random, gems = 3 } = {}) {
+  function placeObjects(grid, start, { hunters = 2, rng = Math.random, gems = 3, exit: fixedExit } = {}) {
     const dist = distances(grid, start);
     const rooms = [];
     for (let i = 0; i < grid.cells.length; i++) {
@@ -74,7 +74,7 @@
       if (grid.cells[i] === 0 && dist[i] > 0 && x % 2 === 1 && y % 2 === 1) rooms.push(i);
     }
     const maxD = Math.max(...rooms.map((r) => dist[r]));
-    const exit = rooms.reduce((a, b) => (dist[b] > dist[a] ? b : a));
+    const exit = fixedExit !== undefined ? fixedExit : rooms.reduce((a, b) => (dist[b] > dist[a] ? b : a));
     const deadEnd = (i) => grid.neighbors(i).length === 1;
     const far = (f) => rooms.filter((r) => r !== exit && dist[r] >= f * maxD);
     let gemPool = far(0.3).filter(deadEnd);

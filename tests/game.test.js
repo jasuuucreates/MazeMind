@@ -36,6 +36,17 @@ test('createLevel is repeatable with the same seed', () => {
   assert.deepStrictEqual([a.start, a.exit, a.gems, a.hunterSpawns], [b.start, b.exit, b.gems, b.hunterSpawns]);
 });
 
+test('placeObjects keeps an exit that is given to it', () => {
+  const { generateMaze, roomIndex } = require('../js/mazegen.js');
+  const { makeRng } = require('../js/grid.js');
+  const { placeObjects } = require('../js/game.js');
+  const grid = generateMaze(8, 6, makeRng(2));
+  const exit = roomIndex(grid, 1, 0); // right next to the start, never the farthest room
+  const lv = placeObjects(grid, roomIndex(grid, 0, 0), { hunters: 1, rng: makeRng(2), exit });
+  assert.strictEqual(lv.exit, exit);
+  assert.ok(!lv.gems.includes(exit));
+});
+
 test('the player cannot walk into a wall', () => {
   const game = new Game(level(CORRIDOR));
   const before = game.player.pos;
