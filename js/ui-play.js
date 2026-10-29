@@ -40,6 +40,7 @@
     state.levelName = name || cfg.name;
     state.game = new MM.game.Game(state.level, { algorithm: $('play-algo').value, speed: Number($('play-diff').value), seed: (Math.random() * 1e9) >>> 0 });
     state.paused = false;
+    state.newBest = null;
     state.vis = {};
     state.buffer = null;
     resize();
@@ -241,7 +242,7 @@
     let sub;
     if (g.status === 'won') {
       title = 'You escaped';
-      sub = `Score ${g.score}. N for the next level, R to replay this maze.`;
+      sub = `${state.newBest ? 'New best! ' : ''}Score ${g.score}. N for the next level, R to replay this maze.`;
     } else if (g.status === 'lost') {
       title = 'Caught';
       sub = 'Out of lives. R to try this maze again.';
@@ -272,7 +273,7 @@
   // the score bar and the brain panel are built once per game and then only their numbers change,
   // so nothing flickers and the bars can slide
   function buildPanels() {
-    $('play-hud').innerHTML = ['Level', 'Lives', 'Gems', 'Time', 'Score'].map((k) => `<div><b data-hud="${k}"></b><span>${k}</span></div>`).join('');
+    $('play-hud').innerHTML = ['Level', 'Lives', 'Gems', 'Time', 'Score'].map((k) => `<div><b data-hud="${k}"></b><span data-hud-label="${k}">${k}</span></div>`).join('');
     const meter = (key, label, dim) => `<div class="meter"><span>${label}</span><div class="track${dim ? ' dim' : ''}"><i data-k="${key}"></i></div><em data-v="${key}"></em></div>`;
     $('play-brain').innerHTML = state.game.hunters
       .map((h, k) => `<div class="hunter" data-h="${k}">
@@ -290,6 +291,34 @@
     state.panelGame = state.game;
   }
 
+  // best score per level and difficulty, kept in this browser only
+  const BEST_KEY = 'mazemind-best';
+  function loadBest() {
+    try {
+      return JSON.parse(localStorage.getItem(BEST_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function bestKey() {
+    return `${state.levelName} | ${$('play-diff').selectedOptions[0].text}`;
+  }
+
+  // returns true when this win beats the saved best
+  function recordBest(g) {
+    const all = loadBest();
+    const old = all[bestKey()];
+    if (old && old.score >= g.score) return false;
+    all[bestKey()] = { score: g.score, time: Math.round(g.elapsed / 1000) };
+    try {
+      localStorage.setItem(BEST_KEY, JSON.stringify(all));
+    } catch (e) {
+      // storage blocked (private window): the best score just isn't remembered
+    }
+    return true;
+  }
+
   function hud() {
     const g = state.game;
     if (state.panelGame !== g) buildPanels();
@@ -301,6 +330,10 @@
       Time: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`,
       Score: String(g.score),
     };
+    const best = loadBest()[bestKey()];
+    const scoreLabel = best ? `Score, best ${best.score} in ${best.time}s` : 'Score';
+    const labelEl = document.querySelector('[data-hud-label="Score"]');
+    if (labelEl && labelEl.textContent !== scoreLabel) labelEl.textContent = scoreLabel;
     for (const [k, v] of Object.entries(values)) {
       const el = document.querySelector(`[data-hud="${k}"]`);
       if (el.textContent !== v) el.textContent = v;
@@ -353,6 +386,8 @@
       }
       g.update(dt);
     }
+    // a win can also happen on a key press between frames, so check it outside the running branch
+    if (g && g.status === 'won' && state.newBest === null) state.newBest = recordBest(g);
     if (g && visible) {
       draw(t);
       state.panelTimer += dt;
