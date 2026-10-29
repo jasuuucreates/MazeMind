@@ -1,6 +1,6 @@
 {
   "name": "mazemind",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Maze escape game with AI hunters: A*, BFS, DFS and greedy search, fuzzy logic and a genetic algorithm",
   "scripts": {
     "test": "node --test \"tests/*.test.js\""
