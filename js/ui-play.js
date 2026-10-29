@@ -386,8 +386,8 @@
     const dt = Math.min(100, t - (state.last || t));
     state.last = t;
     const g = state.game;
-    const visible = MM.current === 'play';
-    // the game only runs while its tab is on screen
+    // the game only runs while its tab is on screen and the shortcuts list is closed
+    const visible = MM.current === 'play' && !document.getElementById('help').open;
     if (g && visible && !state.paused && g.status === 'playing') {
       const wantsMove = state.keys.length || (state.buffer && state.buffer.until > t);
       if (wantsMove) {
@@ -421,7 +421,7 @@
   }
 
   function onKey(ev) {
-    if (MM.current !== 'play' || !state.game) return;
+    if (MM.current !== 'play' || !state.game || document.getElementById('help').open) return;
     const k = ev.key;
     const dir = DIR_OF[k];
     if (dir) {

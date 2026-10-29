@@ -15,6 +15,7 @@
       <a href="#lab">Search Lab</a>
       <a href="#evolve">Maze Evolution</a>
       <a href="#about">How it works</a>
+      <button class="linkish" id="help-open" aria-haspopup="dialog" title="Keyboard shortcuts (?)">?</button>
     </nav>
   </header>
 
@@ -238,6 +239,23 @@
       </div>
     </section>
   </main>
+
+  <dialog id="help" aria-labelledby="help-title">
+    <h3 id="help-title">Keyboard shortcuts</h3>
+    <table class="results">
+      <tbody>
+        <tr><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>move (hold to keep walking, press early to turn at the next corner)</td></tr>
+        <tr><td><kbd>P</kbd></td><td>pause / continue</td></tr>
+        <tr><td><kbd>R</kbd></td><td>restart the same maze</td></tr>
+        <tr><td><kbd>N</kbd></td><td>next level, after you escape</td></tr>
+        <tr><td><kbd>M</kbd></td><td>sound on / off</td></tr>
+        <tr><td><kbd>?</kbd></td><td>this list</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>close this list</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">On a touch screen, drag on the maze to steer. In the Search Lab, drag on the grid to draw walls and move S and G.</p>
+    <form method="dialog"><button class="primary">Close</button></form>
+  </dialog>
 
   <script src="js/grid.js"></script>
   <script src="js/search.js"></script>

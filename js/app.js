@@ -15,6 +15,16 @@
     MM.current = name;
   }
 
+  // '?' opens the shortcuts list on every screen (Esc closes it, the browser handles that)
+  function openHelp() {
+    const dlg = document.getElementById('help');
+    if (!dlg.open) dlg.showModal();
+  }
+  root.addEventListener('keydown', (ev) => {
+    if (ev.key === '?' && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) openHelp();
+  });
+  root.addEventListener('DOMContentLoaded', () => document.getElementById('help-open').addEventListener('click', openHelp));
+
   root.addEventListener('hashchange', () => show(location.hash.slice(1)));
   root.addEventListener('DOMContentLoaded', () => show(location.hash.slice(1)));
 })(window);
