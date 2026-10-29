@@ -451,6 +451,37 @@
     }
   }
 
+  // touch screens (and the mouse): drag on the maze to steer, keep holding to keep walking
+  function bindSwipe() {
+    const c = $('play-canvas');
+    let origin = null;
+    c.addEventListener('pointerdown', (ev) => {
+      origin = { x: ev.clientX, y: ev.clientY };
+      c.setPointerCapture(ev.pointerId);
+      MM.sound.unlock();
+    });
+    c.addEventListener('pointermove', (ev) => {
+      if (!origin || !state.game) return;
+      const dx = ev.clientX - origin.x;
+      const dy = ev.clientY - origin.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+      const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+      if (state.keys[state.keys.length - 1] !== dir) {
+        const wasIdle = state.keys.length === 0;
+        state.keys = [dir];
+        state.buffer = { dir, until: performance.now() + BUFFER_MS };
+        if (wasIdle) state.holdTimer = REPEAT_MS; // start moving on the next frame
+      }
+      origin = { x: ev.clientX, y: ev.clientY }; // a new drag direction turns again
+    });
+    const end = () => {
+      origin = null;
+      state.keys = [];
+    };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', end);
+  }
+
   const play = {
     started: false,
     state, // exposed for debugging in the browser console
@@ -490,6 +521,7 @@
         if (state.game) state.game.algorithm = $('play-algo').value;
       });
       root.addEventListener('keydown', onKey);
+      bindSwipe();
       root.addEventListener('keyup', (ev) => {
         const dir = DIR_OF[ev.key];
         if (dir) state.keys = state.keys.filter((d) => d !== dir);
