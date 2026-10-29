@@ -104,3 +104,43 @@ test('run() picks the algorithm by name', () => {
   assert.strictEqual(search.run('bfs', grid, marks.S, marks.G).algorithm, 'bfs');
   assert.strictEqual(search.run('astar', grid, marks.S, marks.G).algorithm, 'astar');
 });
+
+// properties checked on a batch of random mazes with loops (braided), not just one hand-made grid
+const { makeRng } = require('../js/grid.js');
+const { generateMaze, braid, roomIndex } = require('../js/mazegen.js');
+
+function randomMazes(count) {
+  const out = [];
+  for (let seed = 1; seed <= count; seed++) {
+    const rng = makeRng(seed);
+    const grid = generateMaze(14, 9, rng);
+    braid(grid, 0.5, rng);
+    out.push({ grid, s: roomIndex(grid, 0, 0), g: roomIndex(grid, 13, 8) });
+  }
+  return out;
+}
+
+test('a* with the euclidean heuristic is still optimal (it never overestimates either)', () => {
+  for (const { grid, s, g } of randomMazes(10)) {
+    assert.strictEqual(search.astar(grid, s, g, { heuristic: 'euclidean' }).cost, search.bfs(grid, s, g).cost);
+  }
+});
+
+test('greedy best-first is never shorter than bfs and is sometimes longer', () => {
+  let longer = 0;
+  for (const { grid, s, g } of randomMazes(10)) {
+    const greedy = search.greedy(grid, s, g).cost;
+    const shortest = search.bfs(grid, s, g).cost;
+    assert.ok(greedy >= shortest);
+    if (greedy > shortest) longer++;
+  }
+  assert.ok(longer > 0, 'greedy found the shortest path on every maze');
+});
+
+test('greedy without a heuristic expands cells in breadth-first order', () => {
+  for (const { grid, s, g } of randomMazes(5)) {
+    const greedy = search.greedy(grid, s, g, { heuristic: 'none' });
+    const bfs = search.bfs(grid, s, g);
+    assert.deepStrictEqual(greedy.trace.map((t) => t.node), bfs.trace.map((t) => t.node));
+  }
+});
