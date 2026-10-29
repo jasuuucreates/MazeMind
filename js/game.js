@@ -92,7 +92,7 @@
   }
 
   class Game {
-    constructor(level, { lives = 3, algorithm = 'astar', seed = 1 } = {}) {
+    constructor(level, { lives = 3, algorithm = 'astar', seed = 1, speed = 1 } = {}) {
       this.grid = level.grid;
       this.start = level.start;
       this.exit = level.exit;
@@ -102,6 +102,7 @@
       this.lives = lives;
       this.status = 'playing';
       this.algorithm = algorithm;
+      this.speed = speed; // difficulty: hunters move speed times faster
       this.rng = MM.makeRng(seed);
       this.elapsed = 0;
       this.grace = 0;
@@ -235,6 +236,11 @@
       return true;
     }
 
+    // milliseconds between two steps of this hunter
+    stepTime(h) {
+      return STEP_MS[h.mode] / this.speed;
+    }
+
     update(dt) {
       if (this.status !== 'playing') return;
       this.elapsed += dt;
@@ -248,8 +254,8 @@
         }
         for (const h of this.hunters) {
           h.timer += slice;
-          if (h.timer >= STEP_MS[h.mode]) {
-            h.timer -= STEP_MS[h.mode];
+          if (h.timer >= this.stepTime(h)) {
+            h.timer -= this.stepTime(h);
             this.stepHunter(h);
             if (this.checkCaught()) break;
           }

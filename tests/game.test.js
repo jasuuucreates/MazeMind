@@ -159,6 +159,18 @@ test('after being caught everyone freezes for a moment, including the player', (
   assert.strictEqual(game.movePlayer(1, 0), true);
 });
 
+test('a faster difficulty makes hunters take more steps in the same time', () => {
+  const corridor = ['#'.repeat(40), '#P' + '.'.repeat(30) + 'H.....E#', '#'.repeat(40)];
+  const walked = (speed) => {
+    const game = new Game(level(corridor), { speed });
+    const start = game.hunters[0].pos;
+    game.update(1000);
+    return Math.abs(game.hunters[0].pos - start);
+  };
+  assert.ok(walked(2) >= 2 * walked(1) - 1, `normal ${walked(1)}, fast ${walked(2)}`);
+  assert.ok(walked(0.5) < walked(1));
+});
+
 test('hunters plan with whichever search algorithm is selected', () => {
   const game = new Game(level(['#########', '#P...H.E#', '#########']), { algorithm: 'bfs' });
   const h = game.hunters[0];
