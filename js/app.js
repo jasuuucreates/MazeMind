@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const MM = root.MazeMind;
-  const VIEWS = ['play', 'lab', 'evolve', 'about'];
+  const VIEWS = ['play', 'lab', 'evolve'];
 
   function show(name) {
     if (!VIEWS.includes(name)) name = 'play';

@@ -213,30 +213,6 @@ kbd {
 .rule { font-size: 13px; color: var(--text-2); border-left: 2px solid var(--line-strong); padding: 2px 0 2px 10px; margin: 8px 0 6px; }
 .rule b { color: var(--text); font-weight: 600; }
 
-/* ---------- how it works ---------- */
-
-#view-about .section { padding: 24px 0; border-top: 1px solid var(--line); }
-#view-about .section:first-of-type { border-top: 0; }
-#view-about h3 { margin: 0 0 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-#view-about p { color: var(--text-2); max-width: 82ch; }
-#view-about p b { color: var(--text); }
-
-.flow { display: grid; grid-template-columns: repeat(5, 1fr); border-left: 1px solid var(--line); }
-.flow div { padding: 2px 14px 4px; border-right: 1px solid var(--line); }
-.flow b { display: block; font-weight: 700; }
-.flow span { color: var(--text-2); font-size: 14px; }
-@media (max-width: 900px) { .flow { grid-template-columns: 1fr 1fr; } }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 760px; }
-.fzgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 10px; }
-.fzgrid small { color: var(--text-3); font-size: 13px; }
-@media (max-width: 900px) { .fzgrid { grid-template-columns: 1fr; } }
-.fzout { font-size: 18px; color: var(--text) !important; margin: 14px 0 !important; }
-.rulegrid { max-width: 640px; }
-.rulegrid td, .rulegrid th { text-align: center; }
-.rulegrid td { font-weight: 700; font-size: 13px; border: 1px solid var(--line); }
-.rulegrid td small { display: block; font-weight: 400; color: var(--text-3); }
-
 @media (max-width: 700px) {
   header.top { padding: 14px 18px 0; flex-wrap: wrap; gap: 8px 20px; }
   nav.tabs { margin-left: 0; gap: 18px; }

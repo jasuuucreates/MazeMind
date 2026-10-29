@@ -29,10 +29,6 @@ Made for the **Artificial Intelligence & Soft Computing** course.
 
 ![Maze Evolution](docs/screenshots/maze_evolution.png)
 
-**How it works** - explanation of all three parts, with an interactive version of the hunters' fuzzy controller (move the sliders, see which rules fire).
-
-![Fuzzy logic](docs/screenshots/fuzzy_logic.png)
-
 ## How a hunter decides what to do
 
 On every step a hunter:
@@ -135,8 +131,7 @@ fonts/              Source Sans 3 (SIL Open Font License, see fonts/OFL.txt)
 1. **Play**, level 2, "Show AI thinking" on. Point at the brain panel: distance and energy go in, a fuzzy rule fires, aggression comes out, aggression picks the mode.
 2. Switch "Hunters use" to **DFS**: the dashed routes get long and wander. Switch back to **A\***.
 3. **Search Lab**: press **Step** a few times and read the g, h, f line. Then **Compare all**: A* and BFS find the same shortest path, A* expands fewer cells, greedy and DFS find longer paths.
-4. **How it works**: move the distance and energy sliders and watch the rules light up and the centroid move.
-5. **Maze Evolution**: **Evolve**, watch the best fitness climb, then **Play it**.
+4. **Maze Evolution**: **Evolve**, watch the best fitness climb, then **Play it**.
 
 ## Team
 
