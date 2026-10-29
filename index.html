@@ -171,7 +171,63 @@
 
     <section class="view" id="view-about">
       <h2>How it works</h2>
-      <p class="sub">Coming soon.</p>
+      <p class="sub">MazeMind uses three AI techniques from the syllabus: <b>heuristic search</b> (A*, compared with BFS, DFS and greedy best-first), <b>fuzzy logic</b> and a <b>genetic algorithm</b>.</p>
+
+      <div class="card">
+        <h3>What a hunter does on every step</h3>
+        <div class="flow">
+          <div><b>1. Sense</b><span>A* measures the real distance to the player through the maze.</span></div>
+          <div><b>2. Feel</b><span>Fuzzy logic turns distance + energy into an aggression value.</span></div>
+          <div><b>3. Decide</b><span>Aggression &ge; 62: CHASE, &ge; 38: AMBUSH (cut you off), else PATROL or REST.</span></div>
+          <div><b>4. Plan</b><span>The chosen search algorithm plans a route to the target.</span></div>
+          <div><b>5. Act</b><span>Take one step. Chasing costs energy, resting restores it.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>1. Search algorithms</h3>
+        <table class="results">
+          <thead><tr><th>Algorithm</th><th>Frontier</th><th>Expands next</th><th>Complete</th><th>Shortest path</th><th>Uses h(n)</th></tr></thead>
+          <tbody>
+            <tr><td><b>BFS</b></td><td>queue (FIFO)</td><td>the oldest cell</td><td>yes</td><td>yes (equal step costs)</td><td>no</td></tr>
+            <tr><td><b>DFS</b></td><td>stack (LIFO)</td><td>the newest cell</td><td>yes (finite grid)</td><td>no</td><td>no</td></tr>
+            <tr><td><b>Greedy best-first</b></td><td>priority queue</td><td>lowest h(n)</td><td>yes (finite grid)</td><td>no</td><td>yes</td></tr>
+            <tr><td><b>A*</b></td><td>priority queue</td><td>lowest f(n) = g(n) + h(n)</td><td>yes</td><td>yes, if h is admissible</td><td>yes</td></tr>
+          </tbody>
+        </table>
+        <p><b>g(n)</b> = steps from the start to n, <b>h(n)</b> = estimated steps from n to the goal. We use the Manhattan distance |x<sub>1</sub> &minus; x<sub>2</sub>| + |y<sub>1</sub> &minus; y<sub>2</sub>|: you can only move up, down, left or right, so the true distance is never shorter. The heuristic is <b>admissible</b> (never overestimates) and <b>consistent</b>, which is why A* returns the shortest path while expanding fewer cells than BFS. Try it in the <a href="#lab">Search Lab</a>.</p>
+      </div>
+
+      <div class="card">
+        <h3>2. Fuzzy logic: the hunter's mood (Mamdani inference)</h3>
+        <p>Instead of hard rules like "if distance &lt; 8 then chase", each input belongs to several sets <i>partly</i>. A distance of 7 steps is a little NEAR and a little MEDIUM at the same time, so the hunter's behaviour changes smoothly.</p>
+        <div class="grid2">
+          <label class="field">Distance to player <span><input id="fz-d" type="range" min="0" max="40" value="6"> <b id="fz-d-v"></b></span></label>
+          <label class="field">Hunter energy <span><input id="fz-e" type="range" min="0" max="100" value="70"> <b id="fz-e-v"></b></span></label>
+        </div>
+        <div class="fzgrid">
+          <div><small>Input: distance</small><canvas id="fz-dist"></canvas></div>
+          <div><small>Input: energy</small><canvas id="fz-energy"></canvas></div>
+          <div><small>Output: aggression (shaded = combined rule output, line = centroid)</small><canvas id="fz-aggr"></canvas></div>
+        </div>
+        <p id="fz-out" class="fzout"></p>
+        <table class="results rulegrid" id="fz-rules">
+          <thead><tr><th>distance \ energy</th><th>LOW</th><th>MEDIUM</th><th>HIGH</th></tr></thead>
+          <tbody>
+            <tr><th>NEAR</th><td data-d="NEAR" data-e="LOW"></td><td data-d="NEAR" data-e="MEDIUM"></td><td data-d="NEAR" data-e="HIGH"></td></tr>
+            <tr><th>MEDIUM</th><td data-d="MEDIUM" data-e="LOW"></td><td data-d="MEDIUM" data-e="MEDIUM"></td><td data-d="MEDIUM" data-e="HIGH"></td></tr>
+            <tr><th>FAR</th><td data-d="FAR" data-e="LOW"></td><td data-d="FAR" data-e="MEDIUM"></td><td data-d="FAR" data-e="HIGH"></td></tr>
+          </tbody>
+        </table>
+        <p><b>Steps:</b> (1) <b>fuzzify</b> both inputs with the triangle/trapezoid membership functions; (2) each of the 9 rules fires with strength = <b>min</b> of its two memberships (fuzzy AND); (3) each rule <b>clips</b> its output set at that strength; (4) the clipped sets are combined with <b>max</b>; (5) <b>defuzzify</b> with the centroid (centre of gravity) to get one number.</p>
+      </div>
+
+      <div class="card">
+        <h3>3. Genetic algorithm: breeding harder mazes</h3>
+        <p><b>Chromosome:</b> one bit for every place where two neighbouring rooms could be joined: 1 = passage, 0 = wall. A 14 &times; 9 maze has 13&times;9 + 14&times;8 = 229 genes.</p>
+        <p><b>Fitness:</b> mazes whose exit cannot be reached score below 0.25. Solvable mazes score 0.25 + reach&sup2; &times; (weighted mix of A* route length, dead ends and escape loops), where reach = share of rooms connected to the start and loops = passages &minus; rooms + 1.</p>
+        <p><b>Operators:</b> elitism (keep the best 2), tournament selection (size 3), uniform crossover (rate 0.9), bit-flip mutation (rate 1%). The search algorithm is reused inside the fitness function, which links the two halves of the project. Watch it in <a href="#evolve">Maze Evolution</a>.</p>
+      </div>
     </section>
   </main>
 
@@ -185,6 +241,7 @@
   <script src="js/ui-play.js"></script>
   <script src="js/ui-lab.js"></script>
   <script src="js/ui-evolve.js"></script>
+  <script src="js/ui-about.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
