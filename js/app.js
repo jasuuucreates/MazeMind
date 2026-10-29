@@ -5,7 +5,7 @@
   const VIEWS = ['play', 'lab', 'evolve', 'about'];
 
   function show(name) {
-    if (!VIEWS.includes(name)) name = 'lab';
+    if (!VIEWS.includes(name)) name = 'play';
     VIEWS.forEach((v) => {
       document.getElementById('view-' + v).classList.toggle('active', v === name);
       document.querySelector(`nav.tabs a[href="#${v}"]`).classList.toggle('active', v === name);

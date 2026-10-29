@@ -19,8 +19,42 @@
 
   <main>
     <section class="view" id="view-play">
-      <h2>Play</h2>
-      <p class="sub">Coming soon.</p>
+      <h2>Escape the hunters</h2>
+      <p class="sub">Collect every <b style="color:#22d3ee">gem</b>, then reach the <b style="color:#4ade80">exit</b>. Move with <kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, <kbd>P</kbd> pause, <kbd>R</kbd> restart.</p>
+      <div class="layout">
+        <div>
+          <div class="toolbar">
+            <select id="play-level" title="Level"></select>
+            <label class="inline">Hunters plan with
+              <select id="play-algo">
+                <option value="astar">A*</option>
+                <option value="bfs">BFS</option>
+                <option value="greedy">Greedy best-first</option>
+                <option value="dfs">DFS</option>
+              </select>
+            </label>
+            <label class="inline"><input type="checkbox" id="play-thinking" checked> Show AI thinking</label>
+            <span style="flex: 1"></span>
+            <button id="play-pause">Pause</button>
+            <button id="play-new" class="primary">New maze</button>
+          </div>
+          <div class="hud stats5" id="play-hud"></div>
+          <div class="stage" id="play-stage"><canvas id="play-canvas"></canvas></div>
+          <div class="legend">
+            <span><i style="background:#facc15"></i>you</span>
+            <span><i style="background:#22d3ee"></i>gem</span>
+            <span><i style="background:#4ade80"></i>exit (opens after all gems)</span>
+            <span><i style="background:#f87171"></i>hunter + its planned route (dashed) and searched cells (tinted)</span>
+          </div>
+        </div>
+        <aside>
+          <div class="card">
+            <h3>Hunter brains (fuzzy logic)</h3>
+            <p class="hint">Each step: A* measures the distance to you, the fuzzy rules turn distance + energy into aggression, aggression picks the mode, then the search plans the route.</p>
+            <div id="play-brain"></div>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <section class="view" id="view-lab">
@@ -92,7 +126,10 @@
   <script src="js/grid.js"></script>
   <script src="js/search.js"></script>
   <script src="js/mazegen.js"></script>
+  <script src="js/fuzzy.js"></script>
+  <script src="js/game.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/ui-play.js"></script>
   <script src="js/ui-lab.js"></script>
   <script src="js/app.js"></script>
 </body>

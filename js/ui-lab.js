@@ -62,7 +62,8 @@
   function resize() {
     const stage = $('lab-stage');
     const maxW = Math.max(300, stage.clientWidth - 28);
-    const maxH = Math.max(260, Math.min(640, root.innerHeight - 230));
+    const top = stage.getBoundingClientRect().top + root.scrollY;
+    const maxH = Math.max(280, Math.min(720, root.innerHeight - top - 64));
     state.cell = MM.render.fitCanvas($('lab-canvas'), state.grid, maxW, maxH);
     draw();
   }
