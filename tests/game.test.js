@@ -108,6 +108,57 @@ test('losing the last life ends the game', () => {
   assert.strictEqual(game.status, 'lost');
 });
 
+test('a hunter never steps onto a cell another hunter is standing on', () => {
+  // two hunters in one corridor, both chasing the player on the left
+  const lv = level(['###########', '#P......E.#', '#.##.####.#', '#.....H.H.#', '###########']);
+  const game = new Game(lv);
+  game.hunters[0].energy = 5; // the front hunter is tired and rests in the corridor
+  for (let t = 0; t < 4000 && game.status === 'playing'; t += 40) {
+    game.update(40);
+    const [a, b] = game.hunters;
+    assert.notStrictEqual(a.pos, b.pos, `hunters overlapped at t=${t}`);
+  }
+});
+
+test('a hunter stuck behind another hunter for 3 steps steps aside', () => {
+  // hunter b wants to reach the player on the left but hunter a stands in the corridor
+  const lv = level(['#############', '#P...HH....E#', '#############']);
+  const game = new Game(lv);
+  const b = game.hunters[1];
+  const start = b.pos;
+  for (let k = 0; k < 3; k++) game.stepHunter(b);
+  assert.notStrictEqual(b.pos, start, 'the blocked hunter never moved');
+  assert.notStrictEqual(b.pos, game.hunters[0].pos, 'it walked onto the other hunter');
+});
+
+test('a patrol waypoint that cannot be reached is swapped for a reachable one', () => {
+  // the room at the far right is sealed off
+  const lv = level(['#########', '#P..H#.E#', '#########']);
+  lv.exit = lv.grid.index(3, 1);
+  const game = new Game(lv);
+  const h = game.hunters[0];
+  h.energy = 60;
+  h.waypoint = lv.grid.index(6, 1);
+  game.player.pos = lv.grid.index(1, 1);
+  game.patrolTarget(h);
+  game.think(h);
+  if (h.mode === 'PATROL') assert.notStrictEqual(h.waypoint, lv.grid.index(6, 1));
+  assert.ok(game.patrolPoints.every((i) => i !== lv.grid.index(6, 1)));
+});
+
+test('after being caught everyone freezes for a moment, including the player', () => {
+  const lv = level(['#######', '#P.H.E#', '#######']);
+  const game = new Game(lv, { lives: 3 });
+  game.movePlayer(1, 0);
+  game.update(300); // caught
+  assert.strictEqual(game.lives, 2);
+  assert.ok(game.grace > 0);
+  assert.strictEqual(game.movePlayer(1, 0), false);
+  game.update(1520); // the pause runs out, the hunter has not stepped again yet
+  assert.ok(game.grace <= 0);
+  assert.strictEqual(game.movePlayer(1, 0), true);
+});
+
 test('hunters plan with whichever search algorithm is selected', () => {
   const game = new Game(level(['#########', '#P...H.E#', '#########']), { algorithm: 'bfs' });
   const h = game.hunters[0];

@@ -107,8 +107,11 @@
       this.elapsed = 0;
       this.grace = 0;
       this.events = [];
+      // hunters only patrol to cells that can actually be reached (evolved mazes can have sealed rooms)
+      const dist = distances(this.grid, this.start);
       this.patrolPoints = [];
-      for (let i = 0; i < this.grid.cells.length; i++) if (this.grid.cells[i] === 0) this.patrolPoints.push(i);
+      for (let i = 0; i < this.grid.cells.length; i++) if (dist[i] >= 0) this.patrolPoints.push(i);
+      this.reachable = Uint8Array.from(dist, (d) => (d >= 0 ? 1 : 0));
       this.hunters = level.hunterSpawns.map((spawn, id) => ({
         id,
         spawn,
@@ -134,7 +137,7 @@
     }
 
     movePlayer(dx, dy) {
-      if (this.status !== 'playing') return false;
+      if (this.status !== 'playing' || this.grace > 0) return false;
       const { x, y } = this.grid.xy(this.player.pos);
       if (this.grid.isWall(x + dx, y + dy)) return false;
       this.player.pos = this.grid.index(x + dx, y + dy);
@@ -164,7 +167,7 @@
     }
 
     patrolTarget(h) {
-      if (h.waypoint < 0 || h.waypoint === h.pos) {
+      if (h.waypoint < 0 || h.waypoint === h.pos || !this.reachable[h.waypoint]) {
         h.waypoint = this.patrolPoints[Math.floor(this.rng() * this.patrolPoints.length)];
       }
       return h.waypoint;
@@ -180,14 +183,37 @@
       else if (h.mode === 'AMBUSH') h.target = this.ambushTarget(h);
       else if (h.mode === 'PATROL') h.target = this.patrolTarget(h);
       else h.target = h.pos;
-      const plan = MM.search.run(this.algorithm, this.grid, h.pos, h.target);
+      // plan around the other hunters (treat them as walls) so they spread out instead of stacking
+      const others = this.hunters.filter((o) => o !== h && o.pos !== h.target);
+      let planGrid = this.grid;
+      if (others.length) {
+        planGrid = this.grid.clone();
+        others.forEach((o) => (planGrid.cells[o.pos] = 1));
+      }
+      let plan = MM.search.run(this.algorithm, planGrid, h.pos, h.target);
+      if (!plan.found && planGrid !== this.grid) plan = MM.search.run(this.algorithm, this.grid, h.pos, h.target);
+      if (!plan.found && h.mode === 'PATROL') h.waypoint = -1;
       h.path = plan.found ? plan.path : [h.pos];
       h.search = { algorithm: plan.algorithm, expanded: plan.expanded, cost: plan.cost, closed: plan.trace.map((t) => t.node) };
     }
 
+    occupied(cell, except) {
+      return this.hunters.some((o) => o !== except && o.pos === cell);
+    }
+
     stepHunter(h) {
       this.think(h);
-      if (h.mode !== 'REST' && h.path.length > 1) h.pos = h.path[1];
+      const next = h.path[1];
+      if (h.mode === 'REST' || next === undefined) h.blocked = 0;
+      else if (!this.occupied(next, h)) {
+        h.pos = next;
+        h.blocked = 0;
+      } else if ((h.blocked = (h.blocked || 0) + 1) >= 3) {
+        // stuck behind another hunter for 3 steps: step aside (or back) to untangle
+        const free = this.grid.neighbors(h.pos).filter((n) => !this.occupied(n, h));
+        if (free.length) h.pos = free[Math.floor(this.rng() * free.length)];
+        h.blocked = 0;
+      }
       h.energy = Math.min(100, Math.max(0, h.energy - ENERGY_COST[h.mode]));
     }
 

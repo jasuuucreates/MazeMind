@@ -228,14 +228,27 @@
       ctx.fillStyle = `rgba(248,113,113,${0.35 * (1 - (g.elapsed - lastCaught.at) / 700)})`;
       ctx.fillRect(0, 0, g.grid.width * cell, g.grid.height * cell);
     }
-    if (g.status !== 'playing' || state.paused) banner(ctx, g, cell);
+    if (g.status !== 'playing' || state.paused || g.grace > 0) banner(ctx, g, cell);
   }
 
   function banner(ctx, g, cell) {
     const w = g.grid.width * cell;
     const h = g.grid.height * cell;
-    const title = state.paused && g.status === 'playing' ? 'Paused' : g.status === 'won' ? 'You escaped!' : 'Caught!';
-    const sub = state.paused && g.status === 'playing' ? 'Press P to continue' : g.status === 'won' ? `Score ${g.score} - press N for the next level or R to replay` : 'Out of lives - press R to try again';
+    let title;
+    let sub;
+    if (g.status === 'won') {
+      title = 'You escaped!';
+      sub = `Score ${g.score} - press N for the next level or R to replay this maze`;
+    } else if (g.status === 'lost') {
+      title = 'Caught!';
+      sub = 'Out of lives - press R to try this maze again';
+    } else if (state.paused) {
+      title = 'Paused';
+      sub = 'Press P to continue';
+    } else {
+      title = 'Caught!';
+      sub = `${g.lives} ${g.lives === 1 ? 'life' : 'lives'} left - back to the start`;
+    }
     ctx.fillStyle = 'rgba(8, 10, 22, 0.72)';
     ctx.fillRect(0, h / 2 - 60, w, 120);
     ctx.textAlign = 'center';
@@ -338,7 +351,7 @@
       }
       // a new direction while already moving is picked up on the next step (buffered turn)
     } else if (k === 'p' || k === 'P') state.paused = !state.paused;
-    else if (k === 'r' || k === 'R') newGame(state.levelName.startsWith('Evolved') ? state.level : null, state.levelName.startsWith('Evolved') ? state.levelName : null);
+    else if (k === 'r' || k === 'R') newGame(state.level, state.levelName); // same maze again
     else if ((k === 'n' || k === 'N') && state.game.status === 'won') {
       const sel = $('play-level');
       sel.value = String(Math.min(LEVELS.length - 1, Number(sel.value) + 1));
