@@ -100,7 +100,7 @@ Tests (needs Node.js 18 or newer, no packages to install):
 npm test
 ```
 
-53 tests for the grid, the four searches, the maze generator, the fuzzy controller, the game rules and the genetic algorithm.
+57 tests for the grid, the four searches, the maze generator, the fuzzy controller, the game rules and the genetic algorithm.
 
 ## Files
 
