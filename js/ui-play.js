@@ -188,6 +188,7 @@
       ['Score', g.score],
     ];
     $('play-hud').innerHTML = items.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+    $('play-pause').textContent = state.paused ? 'Resume' : 'Pause';
   }
 
   const bar = (v, color) => `<div class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%;background:${color}"></i></div>`;
@@ -266,10 +267,23 @@
     init() {
       $('play-level').innerHTML = LEVELS.map((l, i) => `<option value="${i}">${l.name}</option>`).join('');
       $('play-level').value = '1';
-      $('play-level').addEventListener('change', () => newGame());
-      $('play-new').addEventListener('click', () => newGame());
-      $('play-pause').addEventListener('click', () => (state.paused = !state.paused));
-      $('play-algo').addEventListener('change', () => state.game && (state.game.algorithm = $('play-algo').value));
+      // blur controls after use so the arrow keys move the player instead of changing a dropdown
+      $('play-level').addEventListener('change', (ev) => {
+        ev.target.blur();
+        newGame();
+      });
+      $('play-new').addEventListener('click', (ev) => {
+        ev.target.blur();
+        newGame();
+      });
+      $('play-pause').addEventListener('click', (ev) => {
+        ev.target.blur();
+        state.paused = !state.paused;
+      });
+      $('play-algo').addEventListener('change', (ev) => {
+        ev.target.blur();
+        if (state.game) state.game.algorithm = $('play-algo').value;
+      });
       root.addEventListener('keydown', onKey);
       root.addEventListener('keyup', (ev) => ev.key === state.held && (state.held = null));
       root.addEventListener('resize', () => play.started && resize());
