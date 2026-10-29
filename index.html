@@ -26,7 +26,12 @@
         <div>
           <div class="toolbar">
             <select id="play-level" aria-label="Level"></select>
-            <label class="inline">Hunters plan with
+            <select id="play-diff" aria-label="Difficulty">
+              <option value="0.75">Easy</option>
+              <option value="1" selected>Normal</option>
+              <option value="1.3">Hard</option>
+            </select>
+            <label class="inline">Hunters use
               <select id="play-algo">
                 <option value="astar">A*</option>
                 <option value="bfs">BFS</option>

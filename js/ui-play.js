@@ -38,7 +38,7 @@
     const cfg = LEVELS[Number($('play-level').value)];
     state.level = level || MM.game.createLevel({ cols: cfg.cols, rows: cfg.rows, hunters: cfg.hunters, braidChance: cfg.braid, seed: (Math.random() * 1e9) >>> 0 });
     state.levelName = name || cfg.name;
-    state.game = new MM.game.Game(state.level, { algorithm: $('play-algo').value, seed: (Math.random() * 1e9) >>> 0 });
+    state.game = new MM.game.Game(state.level, { algorithm: $('play-algo').value, speed: Number($('play-diff').value), seed: (Math.random() * 1e9) >>> 0 });
     state.paused = false;
     state.vis = {};
     state.buffer = null;
@@ -179,7 +179,7 @@
     ctx.drawImage(state.background, 0, 0);
     ctx.restore();
 
-    const sprites = g.hunters.map((h) => glide('h' + h.id, h.pos, MM.game.STEP_MS[h.mode], t));
+    const sprites = g.hunters.map((h) => glide('h' + h.id, h.pos, g.stepTime(h), t));
     if ($('play-thinking').checked) {
       g.hunters.forEach((h, k) => {
         if (!h.search) return;
@@ -412,6 +412,10 @@
       $('play-pause').addEventListener('click', (ev) => {
         ev.target.blur();
         state.paused = !state.paused;
+      });
+      $('play-diff').addEventListener('change', (ev) => {
+        ev.target.blur();
+        if (state.game) state.game.speed = Number($('play-diff').value);
       });
       $('play-algo').addEventListener('change', (ev) => {
         ev.target.blur();
