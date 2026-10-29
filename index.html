@@ -4,9 +4,96 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MazeMind</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>MazeMind</h1>
-  <p>Coming soon.</p>
+  <header class="top">
+    <div class="brand"><span class="logo"></span>MazeMind <small>AI &amp; Soft Computing project</small></div>
+    <nav class="tabs">
+      <a href="#play">Play</a>
+      <a href="#lab">Search Lab</a>
+      <a href="#evolve">Maze Evolution</a>
+      <a href="#about">How it works</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="view" id="view-play">
+      <h2>Play</h2>
+      <p class="sub">Coming soon.</p>
+    </section>
+
+    <section class="view" id="view-lab">
+      <h2>Search Lab</h2>
+      <p class="sub">Draw walls with the mouse, drag <b>S</b> and <b>G</b>, then watch how each algorithm explores the maze.</p>
+      <div class="layout">
+        <div>
+          <div class="toolbar">
+            <select id="lab-algo" title="Algorithm">
+              <option value="astar">A* search</option>
+              <option value="bfs">Breadth-first search</option>
+              <option value="dfs">Depth-first search</option>
+              <option value="greedy">Greedy best-first</option>
+            </select>
+            <select id="lab-heuristic" title="Heuristic">
+              <option value="manhattan">Manhattan h(n)</option>
+              <option value="euclidean">Euclidean h(n)</option>
+              <option value="none">No heuristic (Dijkstra)</option>
+            </select>
+            <label class="inline">Speed <input id="lab-speed" type="range" min="1" max="40" value="6"></label>
+            <button id="lab-run" class="primary">Run</button>
+            <button id="lab-compare">Compare all</button>
+            <span style="flex: 1"></span>
+            <button id="lab-new">New maze</button>
+            <button id="lab-field">Open field</button>
+            <button id="lab-clear">Clear walls</button>
+          </div>
+          <div class="stage" id="lab-stage"><canvas id="lab-canvas"></canvas></div>
+          <div class="legend">
+            <span><i style="background: rgba(192,132,252,.7)"></i>expanded (closed set)</span>
+            <span><i style="background: rgba(251,191,36,.8)"></i>frontier (open set)</span>
+            <span><i style="background: #2dd4bf"></i>path found</span>
+            <span><i style="background: #4ade80"></i>start</span>
+            <span><i style="background: #f87171"></i>goal</span>
+          </div>
+        </div>
+        <aside>
+          <div class="card">
+            <h3>Live statistics</h3>
+            <div class="stats" id="lab-stats"></div>
+          </div>
+          <div class="card">
+            <h3>How this algorithm works</h3>
+            <p id="lab-explain"></p>
+          </div>
+          <div class="card">
+            <h3>Comparison on this maze</h3>
+            <table class="results">
+              <thead><tr><th>Algorithm</th><th>Path</th><th>Expanded</th><th>Max frontier</th><th>ms</th><th>Shortest?</th></tr></thead>
+              <tbody id="lab-results"><tr><td colspan="6" class="muted">Press <b>Compare all</b>.</td></tr></tbody>
+            </table>
+            <p class="hint" id="lab-compare-note"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-evolve">
+      <h2>Maze Evolution</h2>
+      <p class="sub">Coming soon.</p>
+    </section>
+
+    <section class="view" id="view-about">
+      <h2>How it works</h2>
+      <p class="sub">Coming soon.</p>
+    </section>
+  </main>
+
+  <script src="js/grid.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/mazegen.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/ui-lab.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
