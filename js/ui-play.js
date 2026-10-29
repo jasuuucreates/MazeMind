@@ -8,6 +8,7 @@
     { name: '1 - Warm-up', cols: 12, rows: 8, hunters: 1, braid: 0.5 },
     { name: '2 - Two hunters', cols: 14, rows: 9, hunters: 2, braid: 0.45 },
     { name: '3 - The labyrinth', cols: 17, rows: 11, hunters: 3, braid: 0.4 },
+    { name: '4 - Hunting party', cols: 19, rows: 12, hunters: 4, braid: 0.5 },
   ];
   const DIR_OF = {
     ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
