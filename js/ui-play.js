@@ -9,10 +9,12 @@
     { name: '2 - Two hunters', cols: 14, rows: 9, hunters: 2, braid: 0.45 },
     { name: '3 - The labyrinth', cols: 17, rows: 11, hunters: 3, braid: 0.4 },
   ];
-  const KEYS = {
-    ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-    w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0], W: [0, -1], S: [0, 1], A: [-1, 0], D: [1, 0],
+  const DIR_OF = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right',
   };
+  const VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const BUFFER_MS = 300; // a turn pressed slightly before a junction is remembered this long
   const MODE_COLORS = { CHASE: '#f87171', AMBUSH: '#fbbf24', PATROL: '#38bdf8', REST: '#94a3b8' };
   const REPEAT_MS = 125;
 
@@ -24,8 +26,11 @@
     background: null,
     paused: false,
     last: 0,
-    held: null,
+    keys: [], // held directions, most recent last
+    buffer: null, // { dir, until }: last pressed direction, tried first
     holdTimer: 0,
+    lastMove: -1e9,
+    vis: {}, // sliding positions of the player and hunters
     panelTimer: 0,
     raf: 0,
   };
@@ -36,7 +41,46 @@
     state.levelName = name || cfg.name;
     state.game = new MM.game.Game(state.level, { algorithm: $('play-algo').value, seed: (Math.random() * 1e9) >>> 0 });
     state.paused = false;
+    state.vis = {};
+    state.buffer = null;
     resize();
+  }
+
+  // the game moves in whole cells; on screen each sprite slides from its old cell to the new one
+  function gridPoint(v, now) {
+    const t = Math.min(1, Math.max(0, (now - v.start) / v.dur));
+    return [v.fx + (v.tx - v.fx) * t, v.fy + (v.ty - v.fy) * t];
+  }
+
+  function glide(key, idx, dur, now) {
+    const w = state.game.grid.width;
+    const gx = (idx % w) + 0.5;
+    const gy = Math.floor(idx / w) + 0.5;
+    let v = state.vis[key];
+    if (!v) v = state.vis[key] = { idx, fx: gx, fy: gy, tx: gx, ty: gy, start: now, dur };
+    if (v.idx !== idx) {
+      const [cx, cy] = gridPoint(v, now);
+      const slide = Math.abs(cx - gx) + Math.abs(cy - gy) <= 1.6; // a respawn is a big jump: snap instead
+      Object.assign(v, { idx, fx: slide ? cx : gx, fy: slide ? cy : gy, tx: gx, ty: gy, start: now, dur });
+    }
+    const [x, y] = gridPoint(v, now);
+    return [x * state.cell, y * state.cell];
+  }
+
+  // newest direction first; if that way is a wall, keep going the way of an older held key
+  function tryMove(now) {
+    const g = state.game;
+    const order = [];
+    if (state.buffer && state.buffer.until > now) order.push(state.buffer.dir);
+    for (let k = state.keys.length - 1; k >= 0; k--) order.push(state.keys[k]);
+    for (const dir of order) {
+      if (g.movePlayer(...VEC[dir])) {
+        if (state.buffer && state.buffer.dir === dir) state.buffer = null;
+        state.lastMove = now;
+        return true;
+      }
+    }
+    return false;
   }
 
   function resize() {
@@ -72,8 +116,7 @@
     ctx.restore();
   }
 
-  function drawHunter(ctx, g, cell, h, t) {
-    const [cx, cy] = MM.render.center(g.grid, cell, h.pos);
+  function drawHunter(ctx, g, cell, h, t, cx, cy) {
     const r = cell * 0.4;
     ctx.save();
     ctx.shadowColor = h.color;
@@ -88,9 +131,10 @@
     ctx.restore();
     // eyes look at the next cell on the hunter's route
     const next = h.path.length > 1 ? h.path[1] : h.pos;
+    const [ox, oy] = MM.render.center(g.grid, cell, h.pos);
     const [nx, ny] = MM.render.center(g.grid, cell, next);
-    const lx = Math.sign(nx - cx) * r * 0.15;
-    const ly = Math.sign(ny - cy) * r * 0.15;
+    const lx = Math.sign(nx - ox) * r * 0.15;
+    const ly = Math.sign(ny - oy) * r * 0.15;
     for (const side of [-1, 1]) {
       ctx.fillStyle = '#fff';
       ctx.beginPath();
@@ -101,7 +145,27 @@
       ctx.arc(cx + side * r * 0.38 + lx, cy - r * 0.2 + ly, r * 0.13, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (h.mode === 'REST') MM.render.drawLabel(ctx, g.grid, cell, h.pos, 'z', '#e2e8f0');
+    if (h.mode === 'REST') {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = `700 ${Math.max(8, Math.floor(cell * 0.45))}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('z', cx + r * 0.9, cy - r * 0.9);
+    }
+  }
+
+  // dashed planned route, starting from where the sprite is drawn right now
+  function drawRoute(ctx, cell, from, path, color) {
+    const g = state.game;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(2, cell * 0.12);
+    ctx.setLineDash([cell * 0.3, cell * 0.25]);
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    for (const i of path) ctx.lineTo(...MM.render.center(g.grid, cell, i));
+    ctx.stroke();
+    ctx.restore();
   }
 
   function draw(t) {
@@ -114,21 +178,19 @@
     ctx.drawImage(state.background, 0, 0);
     ctx.restore();
 
+    const sprites = g.hunters.map((h) => glide('h' + h.id, h.pos, MM.game.STEP_MS[h.mode], t));
     if ($('play-thinking').checked) {
-      for (const h of g.hunters) {
-        if (!h.search) continue;
+      g.hunters.forEach((h, k) => {
+        if (!h.search) return;
         MM.render.fillCells(ctx, g.grid, cell, h.search.closed, h.color + '22', 0);
-        ctx.save();
-        ctx.setLineDash([cell * 0.3, cell * 0.25]);
-        MM.render.drawPath(ctx, g.grid, cell, h.path, h.color, Math.max(2, cell * 0.12));
-        ctx.restore();
+        drawRoute(ctx, cell, sprites[k], h.path, h.color);
         if (h.mode === 'AMBUSH') {
           const [tx, ty] = MM.render.center(g.grid, cell, h.target);
           ctx.strokeStyle = h.color;
           ctx.lineWidth = 2;
           ctx.strokeRect(tx - cell * 0.4, ty - cell * 0.4, cell * 0.8, cell * 0.8);
         }
-      }
+      });
     }
 
     // exit: locked (grey) until every gem is collected, then a pulsing green portal
@@ -150,8 +212,16 @@
       drawDiamond(ctx, gx, gy + Math.sin(t / 250 + gem) * cell * 0.05, cell * 0.32, '#22d3ee');
     }
 
-    MM.render.drawDot(ctx, g.grid, cell, g.player.pos, '#facc15', 0.36, 14);
-    g.hunters.forEach((h) => drawHunter(ctx, g, cell, h, t));
+    const [px, py] = glide('player', g.player.pos, REPEAT_MS, t);
+    ctx.save();
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(px, py, cell * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    g.hunters.forEach((h, k) => drawHunter(ctx, g, cell, h, t, sprites[k][0], sprites[k][1]));
 
     const lastCaught = [...g.events].reverse().find((e) => e.type === 'caught');
     if (lastCaught && g.elapsed - lastCaught.at < 700) {
@@ -222,17 +292,20 @@
     const dt = Math.min(100, t - (state.last || t));
     state.last = t;
     const g = state.game;
-    if (g && !state.paused && g.status === 'playing') {
-      if (state.held) {
+    const visible = MM.current === 'play';
+    // the game only runs while its tab is on screen
+    if (g && visible && !state.paused && g.status === 'playing') {
+      const wantsMove = state.keys.length || (state.buffer && state.buffer.until > t);
+      if (wantsMove) {
         state.holdTimer += dt;
         if (state.holdTimer >= REPEAT_MS) {
-          state.holdTimer = 0;
-          g.movePlayer(...KEYS[state.held]);
+          // keep the rhythm exact while moving; if blocked, be ready to go the moment a way opens
+          state.holdTimer = tryMove(t) ? state.holdTimer - REPEAT_MS : REPEAT_MS;
         }
       }
       g.update(dt);
     }
-    if (g) {
+    if (g && visible) {
       draw(t);
       state.panelTimer += dt;
       if (state.panelTimer > 150) {
@@ -247,12 +320,23 @@
   function onKey(ev) {
     if (MM.current !== 'play' || !state.game) return;
     const k = ev.key;
-    if (KEYS[k]) {
+    const dir = DIR_OF[k];
+    if (dir) {
       ev.preventDefault();
       if (ev.repeat) return;
-      state.held = k;
-      state.holdTimer = 0;
-      if (!state.paused) state.game.movePlayer(...KEYS[k]);
+      const now = performance.now();
+      const wasIdle = state.keys.length === 0;
+      state.keys = state.keys.filter((d) => d !== dir).concat(dir);
+      state.buffer = { dir, until: now + BUFFER_MS };
+      if (state.paused || state.game.status !== 'playing') return;
+      if (wasIdle && now - state.lastMove >= REPEAT_MS) {
+        // first press moves at once so the controls feel instant
+        state.holdTimer = tryMove(now) ? 0 : REPEAT_MS;
+      } else if (wasIdle) {
+        // quick taps never move faster than holding the key would
+        state.holdTimer = now - state.lastMove;
+      }
+      // a new direction while already moving is picked up on the next step (buffered turn)
     } else if (k === 'p' || k === 'P') state.paused = !state.paused;
     else if (k === 'r' || k === 'R') newGame(state.levelName.startsWith('Evolved') ? state.level : null, state.levelName.startsWith('Evolved') ? state.levelName : null);
     else if ((k === 'n' || k === 'N') && state.game.status === 'won') {
@@ -264,6 +348,7 @@
 
   const play = {
     started: false,
+    state, // exposed for debugging in the browser console
     init() {
       $('play-level').innerHTML = LEVELS.map((l, i) => `<option value="${i}">${l.name}</option>`).join('');
       $('play-level').value = '1';
@@ -285,7 +370,12 @@
         if (state.game) state.game.algorithm = $('play-algo').value;
       });
       root.addEventListener('keydown', onKey);
-      root.addEventListener('keyup', (ev) => ev.key === state.held && (state.held = null));
+      root.addEventListener('keyup', (ev) => {
+        const dir = DIR_OF[ev.key];
+        if (dir) state.keys = state.keys.filter((d) => d !== dir);
+      });
+      // releasing keys while the window is in the background must not leave the player walking
+      root.addEventListener('blur', () => (state.keys = []));
       root.addEventListener('resize', () => play.started && resize());
       newGame();
       state.raf = requestAnimationFrame(loop);
